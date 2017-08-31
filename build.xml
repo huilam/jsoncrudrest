@@ -1,0 +1,30 @@
+<project name="jsoncrudrest" default="jar" basedir=".">
+
+	<property name="src" location="src"/>
+	<property name="build" location="build"/>
+	
+	<tstamp>
+	    <format property="buildno" pattern="yyyyMMdd-HHmm-ss"/>
+	</tstamp>
+	
+	<target name="compile" depends="clean">
+		<mkdir dir="${build}"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" source="1.6" target="1.6">
+			<classpath refid="compile.classpath"/>
+		</javac>
+	</target>
+	
+	<target name="jar" depends="compile">		
+		<jar jarfile="${build}/${ant.project.name}_${buildno}.jar" basedir="${build}" />
+	</target>
+	
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+	
+	<path id="compile.classpath">
+		<fileset dir="${basedir}">
+		    <include name="WebContent/WEB-INF/lib/*.jar" />
+		</fileset>
+	</path>
+</project>
