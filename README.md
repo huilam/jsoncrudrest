@@ -48,5 +48,23 @@
     	"d.orderdesc"=false}
     "d.result":[{},{}]
   }
+  
+  
+4. Retrieve/GET query parameter filters keyword
+
+   4.1 Case Sensitive
+   		4.1.1 <jsonname>.from=<value>
+   		4.1.2 <jsonname>.to=<value>
+   		4.1.3 <jsonname>.contain=<value>
+   		4.1.4 <jsonname>.startwith=<value>
+   		4.1.5 <jsonname>.endwith=<value>
+   		
+   4.2 Case Insensitive
+   		4.2.1 <jsonname>.from.ci=<value>
+   		4.2.2 <jsonname>.to.ci=<value>
+   		4.2.3 <jsonname>.contain.ci=<value>
+   		4.2.4 <jsonname>.startwith.ci=<value>
+   		4.2.5 <jsonname>.endwith.ci=<value>
+   		4.2.6 <jsonname>.ci=<value>
 
 ```
