@@ -35,9 +35,10 @@ import javax.ws.rs.core.Response.Status;
 
 import org.json.JSONObject;
 
+import hl.jsoncrud.JsonCrudRestUtil;
+
 @Path(value = "/v1") 
 public class JsonCrudSampleRestApi extends JsonCrudBaseRestApi {
-	
 	
     @POST 
     @Path(value = "/{crudkey}")
@@ -56,7 +57,7 @@ public class JsonCrudSampleRestApi extends JsonCrudBaseRestApi {
 		}
     	catch(Throwable ex)
 		{
-			return getBadRequestResp(aCrudKey, uriInfo, ex, true);
+			return getBadRequestResp(aCrudKey, uriInfo, ex);
 		}	    	
 	}
     
@@ -71,12 +72,12 @@ public class JsonCrudSampleRestApi extends JsonCrudBaseRestApi {
     	if(resp!=null) return resp;    	
     	///////
     	try {
-	    	String sJsonstr = super.retrieveList(uriInfo.getQueryParameters(), aCrudKey, includeResultMeta);
+	    	String sJsonstr = super.retrieveList(aCrudKey, uriInfo.getQueryParameters(), includeResultMeta);
 	    	return Response.status(Status.OK).type(TYPE_APP_JSON).entity(sJsonstr).build();
 		}
     	catch(Exception ex)
 		{
-			return getBadRequestResp(aCrudKey, uriInfo, ex, true);
+			return getBadRequestResp(aCrudKey, uriInfo, ex);
 		}
 	}
     
@@ -94,12 +95,12 @@ public class JsonCrudSampleRestApi extends JsonCrudBaseRestApi {
     	jsonWhere.put("id", aIdValue);
     	//
     	try {
-    		String sJsonstr = super.retrieve(aCrudKey, jsonWhere);
+    		String sJsonstr = super.retrieveFirst(aCrudKey, jsonWhere);
     		return Response.status(Status.OK).type(TYPE_APP_JSON).entity(sJsonstr).build();
     	}
     	catch(Exception ex)
     	{
-    		return getBadRequestResp(aCrudKey, uriInfo, ex, true);
+    		return getBadRequestResp(aCrudKey, uriInfo, ex);
     	}
     	
 	}
@@ -124,7 +125,7 @@ public class JsonCrudSampleRestApi extends JsonCrudBaseRestApi {
     	}
     	catch(Exception ex)
     	{
-    		return getBadRequestResp(aCrudKey, uriInfo, ex, true);
+    		return getBadRequestResp(aCrudKey, uriInfo, ex);
     	}
     	
 	}
@@ -148,8 +149,15 @@ public class JsonCrudSampleRestApi extends JsonCrudBaseRestApi {
 		}
     	catch(Exception ex)
 		{
-			return getBadRequestResp(aCrudKey, uriInfo, ex, true);
+			return getBadRequestResp(aCrudKey, uriInfo, ex);
 		}
+	}
+    
+    @GET
+    @Path(value = "/about")
+	public Response getJsonCrudVersion()
+	{
+    	return Response.status(Status.OK).type(TYPE_APP_JSON).entity(JsonCrudRestUtil.getJsonCrudVersion()).build();
 	}
     
     /////////////////////////////////////////////////////////////////

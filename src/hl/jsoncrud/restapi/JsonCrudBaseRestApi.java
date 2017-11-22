@@ -86,74 +86,88 @@ public class JsonCrudBaseRestApi {
 		}
 	}
     
-
-	public String retrieveList(MultivaluedMap<String, String> aMapQueryParam, String aCrudKey, boolean includeResultMeta) throws Exception
+	public String retrieveList(String aCrudKey, MultivaluedMap<String, String> aQueryParamFilters, boolean includeResultMeta) throws Exception
 	{
-		boolean debug = JsonCrudRestUtil.isDebugEnabled(aCrudKey);
+		return retrieveList(aCrudKey, new JSONObject(), aQueryParamFilters, includeResultMeta);
+	}
+	
+	public String retrieveList(String aCrudKey, JSONObject aJsonWhere, boolean includeResultMeta) throws Exception
+	{
+		return retrieveList(aCrudKey, new JSONObject(), null, includeResultMeta);
+	}
 
-		JSONObject jsonWhere = new JSONObject();
-    	
+	public String retrieveList(String aCrudKey, JSONObject aJsonWhere, 
+			MultivaluedMap<String, String> aQueryParamFilters, boolean includeResultMeta) throws Exception
+	{
+		if(aJsonWhere==null)
+			aJsonWhere = new JSONObject();
+		
+		JSONObject jsonWhere = aJsonWhere;
+		
     	int iStartFrom 		= 0;
     	int iFetchSize 		= 0;
     	boolean isOrderDesc	= false;
     	List<String> listOrderBy = new ArrayList<String>();
 
-    	for(String sQueryKey : aMapQueryParam.keySet())
+    	if(aQueryParamFilters!=null)
     	{
-    		if(sQueryKey.startsWith(_PARAM_INPUT_PREFIX))
-    		{
-	    		if(_PARAM_STARTFROM.equals(sQueryKey))
+	    	for(String sQueryKey : aQueryParamFilters.keySet())
+	    	{
+	    		if(sQueryKey.startsWith(_PARAM_INPUT_PREFIX))
 	    		{
-	    			String sStartFrom = aMapQueryParam.getFirst(_PARAM_STARTFROM);
-	    			try {
-	    				iStartFrom = Integer.parseInt(sStartFrom);
-	    			}catch(NumberFormatException ex) {
-	    				iStartFrom = 0;
-	    			}
+		    		if(_PARAM_STARTFROM.equals(sQueryKey))
+		    		{
+		    			String sStartFrom = aQueryParamFilters.getFirst(_PARAM_STARTFROM);
+		    			try {
+		    				iStartFrom = Integer.parseInt(sStartFrom);
+		    			}catch(NumberFormatException ex) {
+		    				iStartFrom = 0;
+		    			}
+		    		}
+		    		else if(_PARAM_FETCHSIZE.equals(sQueryKey))
+		    		{
+		    			String sFetchSize = aQueryParamFilters.getFirst(_PARAM_FETCHSIZE);
+		    			try {
+		    				iFetchSize = Integer.parseInt(sFetchSize);
+		    			}catch(NumberFormatException ex) {
+		    				iFetchSize = 0;
+		    			}
+		    		}
+		    		else if(_PARAM_ORDERDESC.equals(sQueryKey))
+		    		{
+		    			String sOrderDesc = aQueryParamFilters.getFirst(_PARAM_ORDERDESC);
+		    			try {
+		    				if("desc".equalsIgnoreCase(sOrderDesc))
+		    				{
+		    					sOrderDesc = "true";
+		    				}
+		    				isOrderDesc = Boolean.parseBoolean(sOrderDesc);
+		    			}catch(NumberFormatException ex) {
+		    				isOrderDesc = true;
+		    			}
+		    		}
+		    		else if(_PARAM_ORDERBY.equals(sQueryKey))
+		    		{
+		    			String sOrderBy = aQueryParamFilters.getFirst(_PARAM_ORDERBY);
+		    			if(sOrderBy!=null)
+		    			{
+		    				
+		    				StringTokenizer tk = new StringTokenizer(sOrderBy,",");
+		    				while(tk.hasMoreTokens())
+		    				{
+		    					String sOrderField = tk.nextToken();
+		    					listOrderBy.add(sOrderField.trim());
+		    				}
+		    			}
+		    		}
 	    		}
-	    		else if(_PARAM_FETCHSIZE.equals(sQueryKey))
-	    		{
-	    			String sFetchSize = aMapQueryParam.getFirst(_PARAM_FETCHSIZE);
-	    			try {
-	    				iFetchSize = Integer.parseInt(sFetchSize);
-	    			}catch(NumberFormatException ex) {
-	    				iFetchSize = 0;
-	    			}
+	    		else
+	    		{    		
+		    		String sQueryVal = aQueryParamFilters.getFirst(sQueryKey);
+		    		//
+		    		jsonWhere.put(sQueryKey, sQueryVal);
 	    		}
-	    		else if(_PARAM_ORDERDESC.equals(sQueryKey))
-	    		{
-	    			String sOrderDesc = aMapQueryParam.getFirst(_PARAM_ORDERDESC);
-	    			try {
-	    				if("desc".equalsIgnoreCase(sOrderDesc))
-	    				{
-	    					sOrderDesc = "true";
-	    				}
-	    				isOrderDesc = Boolean.parseBoolean(sOrderDesc);
-	    			}catch(NumberFormatException ex) {
-	    				isOrderDesc = true;
-	    			}
-	    		}
-	    		else if(_PARAM_ORDERBY.equals(sQueryKey))
-	    		{
-	    			String sOrderBy = aMapQueryParam.getFirst(_PARAM_ORDERBY);
-	    			if(sOrderBy!=null)
-	    			{
-	    				
-	    				StringTokenizer tk = new StringTokenizer(sOrderBy,",");
-	    				while(tk.hasMoreTokens())
-	    				{
-	    					String sOrderField = tk.nextToken();
-	    					listOrderBy.add(sOrderField.trim());
-	    				}
-	    			}
-	    		}
-    		}
-    		else
-    		{    		
-	    		String sQueryVal = aMapQueryParam.getFirst(sQueryKey);
-	    		//
-	    		jsonWhere.put(sQueryKey, sQueryVal);
-    		}
+	    	}
     	}
 
     	JSONObject jsonOutput = JsonCrudRestUtil.retrieveList(
@@ -162,7 +176,7 @@ public class JsonCrudBaseRestApi {
     	
 		if(jsonOutput==null)
 		{
-			jsonOutput = new JSONObject();
+			return new JSONObject().toString();
 		}
 		
 		JSONArray jsonResultOnlyData = (JSONArray) jsonOutput.get(JsonCrudRestUtil.getCRUDMgr()._LIST_RESULT);
@@ -180,23 +194,48 @@ public class JsonCrudBaseRestApi {
 		}
     		
 	}
-    
-	public String retrieve(String aCrudKey, JSONObject aJsonWhere) throws Exception
+
+	public String retrieveList(String aCrudKey, String aSQL, Object[] aObjParams, int aStartFrom, int aFetchSize, boolean includeResultMeta) throws Exception
 	{
-    	boolean debug = JsonCrudRestUtil.isDebugEnabled(aCrudKey);
-   		
-		JSONObject jsonOutput = JsonCrudRestUtil.retrieve(aCrudKey, aJsonWhere);
+		JSONObject jsonOutput = JsonCrudRestUtil.retrieveList(aCrudKey, aSQL, aObjParams, aStartFrom, aFetchSize);
+		if(jsonOutput==null)
+		{
+    		return new JSONObject().toString();
+		}
+		
+		if(includeResultMeta)
+		{
+			return jsonOutput.toString();
+		}
+		else 
+		{
+			JSONArray jsonResultOnlyData = (JSONArray) jsonOutput.get(JsonCrudRestUtil.getCRUDMgr()._LIST_RESULT);
+    		return jsonResultOnlyData.toString();
+		}
+	}
+    
+	public String retrieveList(String aCrudKey, JSONObject aJsonWhere, int aStartFrom, int aFetchSize ) throws Exception
+	{
+		JSONObject jsonOutput = JsonCrudRestUtil.retrieveList(aCrudKey, aJsonWhere, aStartFrom, aFetchSize);
 		if(jsonOutput==null)
 		{
     		return new JSONObject().toString();
 		}
 		return jsonOutput.toString();
 	}
-
+	
+	public String retrieveFirst(String aCrudKey, JSONObject aJsonWhere) throws Exception
+	{
+		JSONObject jsonOutput = JsonCrudRestUtil.retrieveFirst(aCrudKey, aJsonWhere);
+		if(jsonOutput==null)
+		{
+    		return new JSONObject().toString();
+		}
+		return jsonOutput.toString();
+	}
+	
 	public String update(String aCrudKey, JSONObject aJsonData, JSONObject aJsonWhere) throws Exception
 	{
-    	boolean debug = JsonCrudRestUtil.isDebugEnabled(aCrudKey);
-		
 		JSONArray jsonArrOutput = JsonCrudRestUtil.update(aCrudKey, aJsonData, aJsonWhere);
 		if(jsonArrOutput==null)
 		{
@@ -207,17 +246,12 @@ public class JsonCrudBaseRestApi {
 			return jsonArrOutput.toString();
 		}
 		
-		if(debug)
-			return jsonArrOutput.toString();
-		else
-			return "";
+		return jsonArrOutput.toString();
 	}
     
 
 	public String delete(String aCrudKey, JSONObject aJsonWhere) throws Exception
 	{
-    	boolean debug = JsonCrudRestUtil.isDebugEnabled(aCrudKey);
-		
 		JSONArray jsonArrOutput = JsonCrudRestUtil.delete(aCrudKey, aJsonWhere);
 		if(jsonArrOutput==null)
 		{
@@ -228,10 +262,7 @@ public class JsonCrudBaseRestApi {
 			return jsonArrOutput.toString();
 		}
 		
-		if(debug)
-			return jsonArrOutput.toString();
-		else
-			return "";
+		return jsonArrOutput.toString();
 	}
     
     /////////////////////////////////////////////////////////////////
@@ -250,21 +281,28 @@ public class JsonCrudBaseRestApi {
     	
     	return null;
 	}
+	
+    protected Response getBadRequestResp(String aCrudKey, UriInfo uriInfo, Throwable aException)
+    {
+    	boolean isDebug = JsonCrudRestUtil.isDebugEnabled(aCrudKey);
+    	return getBadRequestResp(aCrudKey, uriInfo, aException, isDebug);
+    }
     
-    protected Response getBadRequestResp(String aCrudKey, UriInfo uriInfo, Throwable aException, boolean isDebugMode)
+    private Response getBadRequestResp(String aCrudKey, UriInfo uriInfo, Throwable aException, boolean isDebug)
     {
     	if(!aCrudKey.startsWith(JsonCrudConfig._PROP_KEY_CRUD))
     	{
     		aCrudKey = JsonCrudConfig._PROP_KEY_CRUD+"."+aCrudKey;
     	}
     	
-    	if(isDebugMode)
+    	JSONObject jsonResp = new JSONObject();
+		JSONObject jsonErr = new JSONObject();
+		
+		//
+		if(aException!=null)
 		{
-        	JSONObject jsonResp = new JSONObject();
-			JSONObject jsonErr = new JSONObject();
 			
-			//
-			if(aException!=null)
+			if(isDebug)
 			{
 				if(aException.getStackTrace()!=null)
 				{
@@ -275,59 +313,82 @@ public class JsonCrudBaseRestApi {
 						for(int i=0; i<errTraces.length; i++)
 						{
 							JSONObject jsonTrace = new JSONObject();
+							
 							jsonTrace.put("id", i);
 							jsonTrace.put("classname", errTraces[i].getClassName());
 							jsonTrace.put("linenumber", errTraces[i].getLineNumber());
+							jsonTrace.put("tostring", errTraces[i].toString());
 							jsonArr.put(jsonTrace);
 							
-							if(i>=2)
-							{
+							if(i>2)
 								break;
-							}
 						}
 						jsonErr.put("stacktrace", jsonArr);
 					}
 				}
-				
-				String sErrMessage = aException.getMessage();
+			}
+			
+			String sErrMessage = null;
+			
+			if(aException!=null)
+			{
+				sErrMessage = aException.getMessage();
 				if(aException.getCause()!=null && aException.getCause().getMessage()!=null)
 				{
 					sErrMessage = aException.getCause().getMessage();
 				}
-				
-				if(sErrMessage==null)
-					sErrMessage = "null";
-				
-				jsonErr.put("errmsg", sErrMessage.replaceAll("\"", "'"));
 			}
 			
+			if(sErrMessage==null)
+				sErrMessage = String.valueOf(aException);
+			
+			jsonErr.put("errmsg", sErrMessage.replaceAll("\"", "'"));
+		}
+		
+		if(isDebug)
+		{
 			JSONObject jsonConfig = new JSONObject();
 			
 			jsonConfig.put("jsoncrud", JsonCrudRestUtil.getCrudConfigJson(aCrudKey));
 			//
 			JSONObject jsonPathParams = new JSONObject();
-    		for(String sKey : uriInfo.getPathParameters().keySet())
-    		{
-    			jsonPathParams.put(sKey, uriInfo.getPathParameters().getFirst(sKey));
-    		}
-    		jsonConfig.put("uriinfo.pathparameters", jsonPathParams);
-    		//
-    		JSONObject jsonQueryParams = new JSONObject();
-    		for(String sKey : uriInfo.getQueryParameters().keySet())
-    		{
-    			jsonQueryParams.put(sKey, uriInfo.getQueryParameters().getFirst(sKey));
-    		}
-    		jsonConfig.put("uriinfo.queryparameters", jsonQueryParams);
+			for(String sKey : uriInfo.getPathParameters().keySet())
+			{
+				jsonPathParams.put(sKey, uriInfo.getPathParameters().getFirst(sKey));
+			}
+			jsonConfig.put("uriinfo.pathparameters", jsonPathParams);
 			//
-			jsonResp.put("error", jsonErr);
+			JSONObject jsonQueryParams = new JSONObject();
+			for(String sKey : uriInfo.getQueryParameters().keySet())
+			{
+				jsonQueryParams.put(sKey, uriInfo.getQueryParameters().getFirst(sKey));
+			}
+			jsonConfig.put("uriinfo.queryparameters", jsonQueryParams);
+			
 			jsonResp.put("config", jsonConfig);
-			return Response.status(Status.BAD_REQUEST).type(TYPE_APP_JSON).entity(jsonResp.toString()).build();
 		}
-    	
-    	//hide implementation from public 
-		return Response.status(Status.NOT_FOUND).build();
+		//
+		jsonResp.put("error", jsonErr);
+		jsonResp.put("jsoncrud.version", JsonCrudRestUtil.getJsonCrudVersion());
+		
+		
+		
+		return Response.status(Status.INTERNAL_SERVER_ERROR).type(TYPE_APP_JSON).entity(jsonResp.toString()).build();
+		
      }
 
+    protected Response checkJsonMandatoryFields(JSONObject json, String... aJsonNames)
+    {
+    	if(json!=null)
+    	{
+	    	for(String sJsonName : aJsonNames)
+	    	{
+	    		if(!json.has(sJsonName))
+	    			return Response.status(Status.BAD_REQUEST).build();
+	    	}
+    	}
+    	return null;
+    }
     
     protected Response checkMandatoryInput(String... aStrings)
     {
