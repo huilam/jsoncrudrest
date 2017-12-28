@@ -47,7 +47,6 @@ public class JsonCrudBaseRestApi {
 	protected static final String _PARAM_STARTFROM 		= _PARAM_INPUT_PREFIX+"start";
 	protected static final String _PARAM_FETCHSIZE 		= _PARAM_INPUT_PREFIX+"fetchsize";
 	protected static final String _PARAM_ORDERBY 		= _PARAM_INPUT_PREFIX+"orderby";
-	protected static final String _PARAM_ORDERDESC 		= _PARAM_INPUT_PREFIX+"orderdesc";
 	//
 	protected static final String _PARAM_RESULTMETA 	= _PARAM_INPUT_PREFIX+"meta";
 
@@ -106,7 +105,6 @@ public class JsonCrudBaseRestApi {
 		
     	int iStartFrom 		= 0;
     	int iFetchSize 		= 0;
-    	boolean isOrderDesc	= false;
     	List<String> listOrderBy = new ArrayList<String>();
 
     	if(aQueryParamFilters!=null)
@@ -131,19 +129,6 @@ public class JsonCrudBaseRestApi {
 		    				iFetchSize = Integer.parseInt(sFetchSize);
 		    			}catch(NumberFormatException ex) {
 		    				iFetchSize = 0;
-		    			}
-		    		}
-		    		else if(_PARAM_ORDERDESC.equals(sQueryKey))
-		    		{
-		    			String sOrderDesc = aQueryParamFilters.getFirst(_PARAM_ORDERDESC);
-		    			try {
-		    				if("desc".equalsIgnoreCase(sOrderDesc))
-		    				{
-		    					sOrderDesc = "true";
-		    				}
-		    				isOrderDesc = Boolean.parseBoolean(sOrderDesc);
-		    			}catch(NumberFormatException ex) {
-		    				isOrderDesc = true;
 		    			}
 		    		}
 		    		else if(_PARAM_ORDERBY.equals(sQueryKey))
@@ -172,7 +157,7 @@ public class JsonCrudBaseRestApi {
 
     	JSONObject jsonOutput = JsonCrudRestUtil.retrieveList(
     			aCrudKey, jsonWhere, iStartFrom, iFetchSize, 
-				listOrderBy, isOrderDesc);
+				listOrderBy);
     	
 		if(jsonOutput==null)
 		{
