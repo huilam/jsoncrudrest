@@ -12,9 +12,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.nec.nls.common.http.RestApiUtil;
 
 import hl.jsoncrud.JsonCrudRestUtil;
+import hl.jsoncrud.common.http.RestApiUtil;
 
 public class CRUDService extends HttpServlet {
 
