@@ -91,6 +91,8 @@ System.out.println();
 		Map<String, Map<String, String>> mapQueryParams = getQueryParamsMap(req);
 
 		JSONObject jsonWhereFilters 	= getFilters(mapQueryParams.get(_QPARAM_FILTERS));
+		if(jsonWhereFilters==null)
+			jsonWhereFilters = new JSONObject();
 		
 		System.out.println("sCrudKey ["+ sCrudKey+"]");
 		
@@ -223,26 +225,28 @@ System.out.println();
     
     private List<String> getSorting(Map<String, String> mapSorting)
     {
-    	List<String> listSortFields = new ArrayList<String>();
+    	List<String> listSortFields = null;
     	JSONObject jsonSorting = getKeyValue(mapSorting);
-    	
-    	for(String sKey : jsonSorting.keySet())
+    	if(jsonSorting!=null)
     	{
-    		String sSortDir = jsonSorting.getString(sKey);
-    		
-    		String sSorting = "";
-    		
-    		if(sSortDir.trim().equalsIgnoreCase(""))
-    		{
-    			sSorting = sKey;
-    		}
-    		else
-    		{
-    			sSorting = sKey+"."+sSortDir;
-    		}
-    		listSortFields.add(sSorting);
+    		listSortFields = new ArrayList<String>();
+	    	for(String sKey : jsonSorting.keySet())
+	    	{
+	    		String sSortDir = jsonSorting.getString(sKey);
+	    		
+	    		String sSorting = "";
+	    		
+	    		if(sSortDir.trim().equalsIgnoreCase(""))
+	    		{
+	    			sSorting = sKey;
+	    		}
+	    		else
+	    		{
+	    			sSorting = sKey+"."+sSortDir;
+	    		}
+	    		listSortFields.add(sSorting);
+	    	}
     	}
-    	
     	return listSortFields;
     }
     
@@ -285,25 +289,30 @@ System.out.println();
     private Map<String, Map<String,String>> getQueryParamsMap(HttpServletRequest req)
     {
 		Map<String, Map<String,String>> mapQueryParams = new HashMap<String, Map<String,String>>();
-		for(String sQueryParam : req.getQueryString().split("&"))
+		
+		String sQueryString = req.getQueryString();
+		if(sQueryString!=null)
 		{
-			String[] sQParam = sQueryParam.split("=");
-			Map<String, String> mapParamVals = new HashMap<String,String>();
-			
-			if(sQParam.length>1)
+			for(String sQueryParam : req.getQueryString().split("&"))
 			{
-				String[] sQParamVals = sQParam[1].split(",");
-				for(String sQParamVal : sQParamVals)
+				String[] sQParam = sQueryParam.split("=");
+				Map<String, String> mapParamVals = new HashMap<String,String>();
+				
+				if(sQParam.length>1)
 				{
-					String[] sKVals = sQParamVal.split(":");
-					if(sKVals.length==1)
+					String[] sQParamVals = sQParam[1].split(",");
+					for(String sQParamVal : sQParamVals)
 					{
-						sKVals = new String[] {sKVals[0], ""};
+						String[] sKVals = sQParamVal.split(":");
+						if(sKVals.length==1)
+						{
+							sKVals = new String[] {sKVals[0], ""};
+						}
+						mapParamVals.put(sKVals[0], sKVals[1]);
 					}
-					mapParamVals.put(sKVals[0], sKVals[1]);
 				}
+				mapQueryParams.put(sQParam[0], mapParamVals);
 			}
-			mapQueryParams.put(sQParam[0], mapParamVals);
 		}
 		
 		/*
@@ -313,6 +322,7 @@ System.out.println();
 			System.out.println(sKey+" "+ listParamVals.toString());
 		}
 		*/
+		
 		return mapQueryParams;
     }
     

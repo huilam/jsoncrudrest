@@ -2,12 +2,12 @@
 CREATE TABLE jsoncrud_cfg
 (
     cfg_id bigserial NOT NULL,
-    cfg_namespace character varying(256) NOT NULL,
+    cfg_app_namespace character varying(256) NOT NULL,
     cfg_module_code character varying(128) NOT NULL,
     enabled boolean DEFAULT true,
     created_timestamp bigint DEFAULT extract('epoch' from CURRENT_TIMESTAMP) * 1000,
     CONSTRAINT jsoncrud_cfg_pkey PRIMARY KEY (cfg_id),
-    CONSTRAINT uc_jsoncrud_cfg UNIQUE (cfg_namespace, cfg_module_code)
+    CONSTRAINT uc_jsoncrud_cfg UNIQUE (cfg_app_namespace, cfg_module_code)
 );
 
 CREATE TABLE jsoncrud_cfg_values
