@@ -7,11 +7,11 @@
   </welcome-file-list>
   
   	<servlet>
-	    <servlet-name>ServletContainer</servlet-name>
-	    <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
-	    <init-param>
-	      <param-name>javax.ws.rs.Application</param-name>
-	      <param-value>com.nec.nls.common.restapi.RESTApplication</param-value>
-	    </init-param>
+	    <servlet-name>CRUDService</servlet-name>
+	    <servlet-class>hl.jsoncrud.restapi.CRUDService</servlet-class>
 	</servlet>
+  <servlet-mapping>
+    <servlet-name>CRUDService</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </servlet-mapping>
 </web-app>
