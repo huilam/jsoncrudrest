@@ -1,6 +1,8 @@
 package hl.jsoncrud.restapi;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -74,22 +76,23 @@ public class CRUDService extends HttpServlet {
     	int iOutputHttpStatus 		= HttpServletResponse.SC_NOT_FOUND;
     	JSONObject jsonResult 		= null;
     	String sOutputContentType  	= null;
-    	
+ 
+/*
 System.out.println("sReqUri:"+sReqUri);
 System.out.println("sPathInfo:"+sPathInfo);
 System.out.println("sHttpMethod:"+sHttpMethod);
 System.out.println("sInputContentType:"+sInputContentType);
 System.out.println("sInputData:"+sInputData);
 System.out.println();
-		
+*/
+    	
 		String[] sPaths = sPathInfo.substring(1).split("/");
 		String sCrudKey = sPaths[0];
 		Map<String, Map<String, String>> mapQueryParams = getQueryParamsMap(req);
+
+		JSONObject jsonWhereFilters 	= getFilters(mapQueryParams.get(_QPARAM_FILTERS));
 		
 		System.out.println("sCrudKey ["+ sCrudKey+"]");
-		System.out.println("filters ["+mapQueryParams.get(_QPARAM_FILTERS)+"]");
-		System.out.println("sorting ["+mapQueryParams.get(_QPARAM_SORTING)+"]");
-		System.out.println("pagination ["+mapQueryParams.get(_QPARAM_PAGINATION)+"]");		
 		
 		try {
 			
@@ -101,7 +104,8 @@ System.out.println();
 				{
 					case 1 : //get list
 						
-						Map<String,String> mapPagination = mapQueryParams.get(_QPARAM_PAGINATION);
+						Map<String,String> mapPagination 	= mapQueryParams.get(_QPARAM_PAGINATION);
+						List<String> listSorting 			= getSorting(mapQueryParams.get(_QPARAM_SORTING));
 						
 						long iFetchStartFrom 	= 0;
 						long iFetchSize 		= 0;
@@ -120,20 +124,18 @@ System.out.println();
 								iFetchSize = Long.parseLong(sFetchSize);
 							}
 						}
-						jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, new JSONObject(), iFetchStartFrom ,iFetchSize);
+						jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, jsonWhereFilters, iFetchStartFrom ,iFetchSize, listSorting);
 						break;
 						
 					case 2 : //get id
-						JSONObject jsonWhereClause = new JSONObject();
-						jsonWhereClause.put("id", sPaths[1]);
-						jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, jsonWhereClause);
+						jsonWhereFilters.put("id", sPaths[1]);
+						jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, jsonWhereFilters);
 						break;
 				}
 				
 				if(jsonResult!=null)
 				{
 					iOutputHttpStatus  = 200;
-					sOutputContentType = TYPE_APP_JSON;
 				}
 				
 			}
@@ -144,7 +146,6 @@ System.out.println();
 				if(jsonResult!=null)
 				{
 					iOutputHttpStatus  = 200;
-					sOutputContentType = TYPE_APP_JSON;
 				}
 			}
 			else if(PUT.equalsIgnoreCase(sHttpMethod))
@@ -153,15 +154,13 @@ System.out.println();
 				{
 					case 2 : 
 						
-						JSONObject jsonWhereClause = new JSONObject();
-						jsonWhereClause.put("id", sPaths[1]);
+						jsonWhereFilters.put("id", sPaths[1]);
 						JSONObject jsonUpdateData = new JSONObject(sInputData);
-						JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, jsonWhereClause);
+						JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, jsonWhereFilters);
 						
 						if(jsonArrResult!=null)
 						{
 							iOutputHttpStatus  = 200;
-							sOutputContentType = TYPE_APP_JSON;
 							
 							if(jsonArrResult.length()==1)
 							{
@@ -185,13 +184,11 @@ System.out.println();
 						//??
 						break;
 					case 2 : //get id
-						JSONObject jsonWhereClause = new JSONObject();
-						jsonWhereClause.put("id", sPaths[1]);
-						jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, jsonWhereClause);
+						jsonWhereFilters.put("id", sPaths[1]);
+						jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, jsonWhereFilters);
 						if(jsonArrResult!=null)
 						{
 							iOutputHttpStatus  = 200;
-							sOutputContentType = TYPE_APP_JSON;
 							
 							if(jsonArrResult.length()==1)
 							{
@@ -206,12 +203,64 @@ System.out.println();
 				}
 			}
 			///////////////////////////
+			
+			if(iOutputHttpStatus == 200);
+			{
+				sOutputContentType = TYPE_APP_JSON;
+			}
 					
 			RestApiUtil.processHttpResp(res, iOutputHttpStatus, sOutputContentType, jsonResult.toString());
 			
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
+    }
+    
+    private JSONObject getFilters(Map<String, String> mapFilters)
+    {
+    	return getKeyValue(mapFilters);
+    }
+    
+    private List<String> getSorting(Map<String, String> mapSorting)
+    {
+    	List<String> listSortFields = new ArrayList<String>();
+    	JSONObject jsonSorting = getKeyValue(mapSorting);
+    	
+    	for(String sKey : jsonSorting.keySet())
+    	{
+    		String sSortDir = jsonSorting.getString(sKey);
+    		
+    		String sSorting = "";
+    		
+    		if(sSortDir.trim().equalsIgnoreCase(""))
+    		{
+    			sSorting = sKey;
+    		}
+    		else
+    		{
+    			sSorting = sKey+"."+sSortDir;
+    		}
+    		listSortFields.add(sSorting);
+    	}
+    	
+    	return listSortFields;
+    }
+    
+    private JSONObject getKeyValue(Map<String, String> mapKV)
+    {
+    	JSONObject jsonKV = null;
+    	
+    	if(mapKV!=null && mapKV.size()>0)
+    	{
+    		jsonKV = new JSONObject();
+    	
+	    	for(String sFilterKey : mapKV.keySet())
+	    	{
+	    		jsonKV.put(sFilterKey, mapKV.get(sFilterKey));
+	    	}
+       	}
+    	    	
+    	return jsonKV;
     }
     
     private JSONObject toPaginationResult(JSONArray aJsonArrResult)
@@ -226,6 +275,7 @@ System.out.println();
 			JSONObject jsonMeta = new JSONObject();
 			jsonMeta.put(_PAGINATION_TOTALCNT, aJsonArrResult.length());
 			
+			jsonResult = new JSONObject();
 			jsonResult.put(_PAGINATION_META_SECTION, jsonMeta);
 			jsonResult.put(_PAGINATION_RESULT_SECTION, aJsonArrResult);
 		}
