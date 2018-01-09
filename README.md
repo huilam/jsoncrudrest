@@ -26,45 +26,32 @@
 - http://127.0.0.1:8080/jsoncrudrest/samples/v1/sample_userroles/{id}
 - http://127.0.0.1:8080/jsoncrudrest/samples/v1/sample_userattrs/{id}
 
-3. Pagination support
-------------------------
-- Input (query parameters)
-  - d.meta=true/false 
-  - d.start=0
-  - d.fetchsize=10
-  - d.orderby=jsonfield1,jsonfield2
-  - d.orderdesc=true/false
+
+3. Pagination, Filtering & Sorting support using query parameters
+------------------------------------------------------------------
+ 3.1 Filters
+   - Syntax : filters=<json-attrname>.<modifier>.<operator>
+     <modifier> : not, ci (case insensitive) 
+     <operator> : startwith, endwith, contain, from, to
+   - example : ?filters=jsonfield1.not.contain:xxx,jsonfield2.from:2017,jsonfield3.ci.startwith=AAA
+   
+ 3.2 Sorting
+   - Syntax : sorting=<json-attrname>.<direction>  
+     <direction> : asc, desc
+   - example : ?sorting=jsonfield1,jsonfield2.asc,jsonfield3.desc
+ 
+ 3.3 Pagination
+   - example : ?pagination=start:1,fetchsize:3
   
-  http://127.0.0.1:8080/jsoncrudrest/samples/v1/sample_users?d.meta=true&d.fetchsize=10
   
-  
-- Output (response with 'd.meta=true' in request query params)
+- Output (Pagination support)
   {
-    "d.meta":{
-    	"d.start":0,
-    	"d.total":100,
-    	"d.fetchsize":10,
-    	"d.orderby":"jsonfield1,jsonfield2",
-    	"d.orderdesc"=false}
-    "d.result":[{},{}]
+    "meta":{
+    	"start":1,
+    	"total":100,
+    	"fetchsize":3,
+    	"sorting":"jsonfield1,jsonfield2.asc,jsonfield3.desc"
+     }
+    "result":[{xxx},{yyy},{zzzz}]
   }
   
-  
-4. Retrieve/GET query parameter filters keyword
-
-   4.1 Case Sensitive
-   		4.1.1 <jsonname>.from=<value>
-   		4.1.2 <jsonname>.to=<value>
-   		4.1.3 <jsonname>.contain=<value>
-   		4.1.4 <jsonname>.startwith=<value>
-   		4.1.5 <jsonname>.endwith=<value>
-   		
-   4.2 Case Insensitive
-   		4.2.1 <jsonname>.from.ci=<value>
-   		4.2.2 <jsonname>.to.ci=<value>
-   		4.2.3 <jsonname>.contain.ci=<value>
-   		4.2.4 <jsonname>.startwith.ci=<value>
-   		4.2.5 <jsonname>.endwith.ci=<value>
-   		4.2.6 <jsonname>.ci=<value>
-
-```
