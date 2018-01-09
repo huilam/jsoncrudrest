@@ -1,8 +1,5 @@
 package hl.jsoncrud.restapi;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,33 +9,28 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-
+import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudRestUtil;
+import hl.jsoncrud.common.http.HttpResp;
 import hl.jsoncrud.common.http.RestApiUtil;
 
 public class CRUDService extends HttpServlet {
 
-	private static final long serialVersionUID 			= 1561775564425837002L;
-	
+	private static final long serialVersionUID 		= 1561775564425837002L;
 
-	protected final static String TYPE_APP_JSON 		= "application/json"; 
-	//
-	protected static final String _QPARAM_PAGINATION 	= "pagination";
-	protected static final String _QPARAM_FILTERS 		= "filters";
-	protected static final String _QPARAM_SORTING 		= "sorting";
+	protected final static String TYPE_APP_JSON 	= "application/json"; 
+
+	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
+	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;
+	protected static String _PAGINATION_TOTALCNT 	= JsonCrudConfig._LIST_TOTAL;	
 	
-	protected static final String _PAGINATION_STARTFROM = "start";
-	protected static final String _PAGINATION_FETCHSIZE = "fetchsize";
-	protected static final String _PAGINATION_TOTALCNT 	= "total";	
+	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
+	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	protected static final String _PAGINATION_RESULT_SECTION 	= "result";
-	protected static final String _PAGINATION_META_SECTION 		= "meta";	
-	
-	
-	private final String GET 	= "GET";
-	private final String POST 	= "POST";
-	private final String DELETE	= "DELETE";
-	private final String PUT 	= "PUT";
+	public static final String GET 		= "GET";
+	public static final String POST 	= "POST";
+	public static final String DELETE	= "DELETE";
+	public static final String PUT 		= "PUT";
 
 	public CRUDService() {
         super();
@@ -47,6 +39,8 @@ public class CRUDService extends HttpServlet {
     @Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
     	processHttpMethods(request, response);
+    	
+    	
 	}
 
     @Override
@@ -66,16 +60,12 @@ public class CRUDService extends HttpServlet {
 
     private void processHttpMethods(HttpServletRequest req, HttpServletResponse res) throws ServletException
     {
-    	String sReqUri 				= req.getRequestURI(); //with context root : /jsoncrudrest/{crudkey}
-    	String sPathInfo 			= req.getPathInfo();  //{crudkey}
-    	String sHttpMethod 			= req.getMethod();
+    	String sPathInfo 			= req.getPathInfo();  //{crudkey}/xx/xx
     	
-    	String sInputContentType 	= req.getContentType();
-    	String sInputData 			= RestApiUtil.getReqContent(req);
-    	
-    	int iOutputHttpStatus 		= HttpServletResponse.SC_NOT_FOUND;
     	JSONObject jsonResult 		= null;
-    	String sOutputContentType  	= null;
+    	
+    	HttpResp httpReq = new HttpResp();
+    	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
  
 /*
 System.out.println("sReqUri:"+sReqUri);
@@ -86,83 +76,74 @@ System.out.println("sInputData:"+sInputData);
 System.out.println();
 */
     	
-		String[] sPaths = sPathInfo.substring(1).split("/");
+  	
+		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
 		String sCrudKey = sPaths[0];
-		Map<String, Map<String, String>> mapQueryParams = getQueryParamsMap(req);
-
-		JSONObject jsonWhereFilters 	= getFilters(mapQueryParams.get(_QPARAM_FILTERS));
-		if(jsonWhereFilters==null)
-			jsonWhereFilters = new JSONObject();
-		
 		System.out.println("sCrudKey ["+ sCrudKey+"]");
 		
-		try {
-			
-			if(GET.equalsIgnoreCase(sHttpMethod))
+		Map<String, Map<String, String>> mapQueryParams = CRUDServiceUtil.getQueryParamsMap(req);
+		Map<String, String> mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sCrudKey);
+		
+		//
+		CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
+		if(sPaths.length==2)
+		{
+			if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) || PUT.equalsIgnoreCase(crudReq.getHttpMethod()) || DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 			{
-				
-				
+				crudReq.addCrudFilter("id", sPaths[1]);
+			}
+		}
+		//
+		
+		
+		crudReq = preProcess(crudReq);
+		
+ 		try {
+			
+			if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
+			{
 				switch (sPaths.length)
 				{
 					case 1 : //get list
-						
-						Map<String,String> mapPagination 	= mapQueryParams.get(_QPARAM_PAGINATION);
-						List<String> listSorting 			= getSorting(mapQueryParams.get(_QPARAM_SORTING));
-						
-						long iFetchStartFrom 	= 0;
-						long iFetchSize 		= 0;
-						
-						if(mapPagination!=null)
-						{
-							String sFetchStartFrom 	= mapPagination.get(_PAGINATION_STARTFROM);
-							if(sFetchStartFrom!=null && sFetchStartFrom.trim().length()>0)
-							{
-								iFetchStartFrom = Long.parseLong(sFetchStartFrom);
-							}
-							//
-							String sFetchSize 		= mapPagination.get(_PAGINATION_FETCHSIZE);
-							if(sFetchSize!=null && sFetchSize.trim().length()>0)
-							{
-								iFetchSize = Long.parseLong(sFetchSize);
-							}
-						}
-						jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, jsonWhereFilters, iFetchStartFrom ,iFetchSize, listSorting);
+
+						jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
+								crudReq.getCrudFilters(), 
+								crudReq.getPaginationStartFrom(),
+								crudReq.getPaginationFetchSize(), 
+								crudReq.getCrudSorting());
 						break;
 						
 					case 2 : //get id
-						jsonWhereFilters.put("id", sPaths[1]);
-						jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, jsonWhereFilters);
+						jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
 						break;
 				}
 				
 				if(jsonResult!=null)
 				{
-					iOutputHttpStatus  = 200;
+					httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
 				}
 				
 			}
-			else if(POST.equalsIgnoreCase(sHttpMethod))
+			else if(POST.equalsIgnoreCase(crudReq.getHttpMethod()))
 			{
-				jsonResult = JsonCrudRestUtil.create(sCrudKey, sInputData);
+				jsonResult = JsonCrudRestUtil.create(sCrudKey, crudReq.getInputContentData());
 				
 				if(jsonResult!=null)
 				{
-					iOutputHttpStatus  = 200;
+					httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
 				}
 			}
-			else if(PUT.equalsIgnoreCase(sHttpMethod))
+			else if(PUT.equalsIgnoreCase(crudReq.getHttpMethod()))
 			{
 				switch (sPaths.length)
 				{
-					case 2 : 
-						
-						jsonWhereFilters.put("id", sPaths[1]);
-						JSONObject jsonUpdateData = new JSONObject(sInputData);
-						JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, jsonWhereFilters);
+					case 2 :
+						JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
+						JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
 						
 						if(jsonArrResult!=null)
 						{
-							iOutputHttpStatus  = 200;
+							httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
 							
 							if(jsonArrResult.length()==1)
 							{
@@ -176,7 +157,7 @@ System.out.println();
 						break;
 				}
 			}
-			else if(DELETE.equalsIgnoreCase(sHttpMethod))
+			else if(DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 			{
 				JSONArray jsonArrResult = null;
 
@@ -186,11 +167,10 @@ System.out.println();
 						//??
 						break;
 					case 2 : //get id
-						jsonWhereFilters.put("id", sPaths[1]);
-						jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, jsonWhereFilters);
+						jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, crudReq.getCrudFilters());
 						if(jsonArrResult!=null)
 						{
-							iOutputHttpStatus  = 200;
+							httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
 							
 							if(jsonArrResult.length()==1)
 							{
@@ -206,66 +186,21 @@ System.out.println();
 			}
 			///////////////////////////
 			
-			if(iOutputHttpStatus == 200);
+			if(httpReq.getHttp_status() == HttpServletResponse.SC_OK);
 			{
-				sOutputContentType = TYPE_APP_JSON;
+				httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
 			}
-					
-			RestApiUtil.processHttpResp(res, iOutputHttpStatus, sOutputContentType, jsonResult.toString());
+			httpReq.setContent_data(jsonResult.toString());
+			
+			
+			httpReq = postProcess(req, crudReq, httpReq);
+			RestApiUtil.processHttpResp(res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data());
 			
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
     }
     
-    private JSONObject getFilters(Map<String, String> mapFilters)
-    {
-    	return getKeyValue(mapFilters);
-    }
-    
-    private List<String> getSorting(Map<String, String> mapSorting)
-    {
-    	List<String> listSortFields = null;
-    	JSONObject jsonSorting = getKeyValue(mapSorting);
-    	if(jsonSorting!=null)
-    	{
-    		listSortFields = new ArrayList<String>();
-	    	for(String sKey : jsonSorting.keySet())
-	    	{
-	    		String sSortDir = jsonSorting.getString(sKey);
-	    		
-	    		String sSorting = "";
-	    		
-	    		if(sSortDir.trim().equalsIgnoreCase(""))
-	    		{
-	    			sSorting = sKey;
-	    		}
-	    		else
-	    		{
-	    			sSorting = sKey+"."+sSortDir;
-	    		}
-	    		listSortFields.add(sSorting);
-	    	}
-    	}
-    	return listSortFields;
-    }
-    
-    private JSONObject getKeyValue(Map<String, String> mapKV)
-    {
-    	JSONObject jsonKV = null;
-    	
-    	if(mapKV!=null && mapKV.size()>0)
-    	{
-    		jsonKV = new JSONObject();
-    	
-	    	for(String sFilterKey : mapKV.keySet())
-	    	{
-	    		jsonKV.put(sFilterKey, mapKV.get(sFilterKey));
-	    	}
-       	}
-    	    	
-    	return jsonKV;
-    }
     
     private JSONObject toPaginationResult(JSONArray aJsonArrResult)
     {
@@ -285,45 +220,17 @@ System.out.println();
 		}
     	return jsonResult;
     }
+
     
-    private Map<String, Map<String,String>> getQueryParamsMap(HttpServletRequest req)
+    public CRUDServiceReq preProcess(CRUDServiceReq aCrudReq)
     {
-		Map<String, Map<String,String>> mapQueryParams = new HashMap<String, Map<String,String>>();
-		
-		String sQueryString = req.getQueryString();
-		if(sQueryString!=null)
-		{
-			for(String sQueryParam : req.getQueryString().split("&"))
-			{
-				String[] sQParam = sQueryParam.split("=");
-				Map<String, String> mapParamVals = new HashMap<String,String>();
-				
-				if(sQParam.length>1)
-				{
-					String[] sQParamVals = sQParam[1].split(",");
-					for(String sQParamVal : sQParamVals)
-					{
-						String[] sKVals = sQParamVal.split(":");
-						if(sKVals.length==1)
-						{
-							sKVals = new String[] {sKVals[0], ""};
-						}
-						mapParamVals.put(sKVals[0], sKVals[1]);
-					}
-				}
-				mapQueryParams.put(sQParam[0], mapParamVals);
-			}
-		}
-		
-		/*
-		for(String sKey : mapQueryParams.keySet())
-		{
-			List<String> listParamVals = mapQueryParams.get(sKey);
-			System.out.println(sKey+" "+ listParamVals.toString());
-		}
-		*/
-		
-		return mapQueryParams;
+    	return aCrudReq;
     }
+    
+    public HttpResp postProcess(HttpServletRequest req, CRUDServiceReq aCrudReq, HttpResp aHttpResp)
+    {
+    	return aHttpResp;
+    }
+    
     
 }
