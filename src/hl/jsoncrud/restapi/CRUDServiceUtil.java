@@ -19,7 +19,7 @@ public class CRUDServiceUtil {
 	protected static String _QPARAM_PAGINATION 		= "pagination";
 	protected static String _QPARAM_FILTERS 		= "filters";
 	protected static String _QPARAM_SORTING 		= "sorting";
-		
+	protected static String _QPARAM_RETURNS 		= "returns";	
 	//
 	private static final String QPARAM_SEPARATOR 			= "&";
 	private static final String QPARAM_KEYVALUE_SEPARATOR 	= "=";
@@ -95,6 +95,22 @@ public class CRUDServiceUtil {
     	return getKeyValue(mapFilters);
     }
     
+    public static List<String> getReturns(Map<String, Map<String, String>> mapQueryParams)
+    {
+    	Map<String, String> mapReturn = mapQueryParams.get(_QPARAM_RETURNS);
+    	
+    	if(mapReturn==null)
+    		return null;
+    	
+    	List<String> listReturn = new ArrayList<String>();
+    	for(String sAttrName : mapReturn.keySet())
+    	{
+    		listReturn.add(sAttrName);
+    	}
+    	
+    	return listReturn;
+    }
+
     public static List<String> getSorting(Map<String, Map<String, String>> mapQueryParams)
     {
     	Map<String, String> mapSorting = mapQueryParams.get(_QPARAM_SORTING);

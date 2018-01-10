@@ -15,7 +15,7 @@
 	</target>
 	
 	<target name="jar" depends="compile">		
-		<jar jarfile="${build}/${ant.project.name}_${buildno}.jar" basedir="${build}" />
+		<jar jarfile="${build}/${ant.project.name}_${buildno}.war" basedir="${build}" />
 	</target>
 	
 	<target name="clean">

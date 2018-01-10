@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import hl.jsoncrud.JsonCrudConfig;
+import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudRestUtil;
 import hl.jsoncrud.common.http.HttpResp;
 import hl.jsoncrud.common.http.RestApiUtil;
@@ -20,6 +21,9 @@ public class CRUDService extends HttpServlet {
 
 	protected final static String TYPE_APP_JSON 	= "application/json"; 
 
+	private static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
+	private static String _RESTAPI_ID_ATTRNAME				= "restapi.id";
+	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
 	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;
 	protected static String _PAGINATION_TOTALCNT 	= JsonCrudConfig._LIST_TOTAL;	
@@ -76,7 +80,6 @@ System.out.println("sInputData:"+sInputData);
 System.out.println();
 */
     	
-  	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
 		String sCrudKey = sPaths[0];
 		System.out.println("sCrudKey ["+ sCrudKey+"]");
@@ -88,15 +91,26 @@ System.out.println();
 		CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
 		if(sPaths.length==2)
 		{
-			if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) || PUT.equalsIgnoreCase(crudReq.getHttpMethod()) || DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
+			String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
+			if(sIdFieldName==null || sIdFieldName.trim().length()==0)
+				sIdFieldName = "id";
+			
+			if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
+					|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
+					|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 			{
-				crudReq.addCrudFilter("id", sPaths[1]);
+				crudReq.addCrudFilter(sIdFieldName, sPaths[1]);
 			}
 		}
 		//
+		ICRUDServicePlugin plugin = null;
+		try {
+			plugin = getPlugin(mapCrudConfig);
+		} catch (JsonCrudException e1) {
+			throw new ServletException(e1);
+		}
 		
-		
-		crudReq = preProcess(crudReq);
+		crudReq = preProcess(plugin, crudReq);
 		
  		try {
 			
@@ -110,7 +124,9 @@ System.out.println();
 								crudReq.getCrudFilters(), 
 								crudReq.getPaginationStartFrom(),
 								crudReq.getPaginationFetchSize(), 
-								crudReq.getCrudSorting());
+								crudReq.getCrudSorting(),
+								crudReq.getCrudReturns()
+								);
 						break;
 						
 					case 2 : //get id
@@ -192,8 +208,7 @@ System.out.println();
 			}
 			httpReq.setContent_data(jsonResult.toString());
 			
-			
-			httpReq = postProcess(req, crudReq, httpReq);
+			httpReq = postProcess(plugin, crudReq, httpReq);
 			RestApiUtil.processHttpResp(res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data());
 			
 		} catch (Exception e) {
@@ -222,14 +237,41 @@ System.out.println();
     }
 
     
-    public CRUDServiceReq preProcess(CRUDServiceReq aCrudReq)
+    public CRUDServiceReq preProcess(
+    		ICRUDServicePlugin aPlugin, 
+    		CRUDServiceReq aCrudReq) 
     {
-    	return aCrudReq;
+    	if(aPlugin==null)
+    		return aCrudReq;
+    	return aPlugin.preProcess(aCrudReq);
     }
     
-    public HttpResp postProcess(HttpServletRequest req, CRUDServiceReq aCrudReq, HttpResp aHttpResp)
+    public HttpResp postProcess(
+    		ICRUDServicePlugin aPlugin, 
+    		CRUDServiceReq aCrudReq, HttpResp aHttpResp)
     {
-    	return aHttpResp;
+    	if(aPlugin==null)
+    		return aHttpResp;
+    	return aPlugin.postProcess(aCrudReq, aHttpResp);
+    }
+    
+    private ICRUDServicePlugin getPlugin(Map<String, String> aMapCrudConfig) throws JsonCrudException
+    {
+		ICRUDServicePlugin plugin = null;
+		String sPluginClassName = aMapCrudConfig.get(_RESTAPI_PLUGIN_IMPL_CLASSNAME);
+    	if(sPluginClassName!=null && sPluginClassName.trim().length()>0)
+    	{
+	    	try {
+				plugin = (ICRUDServicePlugin) Class.forName(sPluginClassName).newInstance();
+			} catch (InstantiationException e) {
+				throw new JsonCrudException("PLUGIN_EXCEPTION", e.getMessage());
+			} catch (IllegalAccessException e) {
+				throw new JsonCrudException("PLUGIN_EXCEPTION", e.getMessage());
+			} catch (ClassNotFoundException e) {
+				throw new JsonCrudException("PLUGIN_EXCEPTION", e.getMessage());
+			}
+    	}
+    	return plugin;
     }
     
     
