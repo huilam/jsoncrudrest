@@ -73,8 +73,29 @@ public class RestApiUtil {
 		res.flushBuffer();
     }
 	
+    public static HttpResp httpDelete(String aEndpointURL, 
+    		String aContentType, String aContentData) throws IOException
+    {
+    	return httpSubmit("DELETE", aEndpointURL, aContentType, aContentData);
+    }
+        
     public static HttpResp httpPost(String aEndpointURL, 
     		String aContentType, String aContentData) throws IOException
+    {
+    	return httpSubmit("POST", aEndpointURL, aContentType, aContentData);
+    }
+    
+    public static HttpResp httpPut(String aEndpointURL, 
+    		String aContentType, String aContentData) throws IOException
+    {
+    	return httpSubmit("PUT", aEndpointURL, aContentType, aContentData);
+    }
+    
+    private static HttpResp httpSubmit(
+    		String aHttpMethod,
+    		String aEndpointURL, 
+    		String aContentType, 
+    		String aContentData) throws IOException
     {
     	HttpResp httpResp 	= new HttpResp();
     	
@@ -84,7 +105,7 @@ public class RestApiUtil {
 			
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
-			conn.setRequestMethod("POST");
+			conn.setRequestMethod(aHttpMethod);
 			conn.setRequestProperty(HEADER_CONTENT_TYPE, aContentType);
 			
 			OutputStream out 		= conn.getOutputStream();
