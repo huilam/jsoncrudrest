@@ -1,5 +1,7 @@
 package hl.jsoncrud.restapi;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -31,6 +33,9 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
+	private static String _VERSION = "0.1,0";
+	
+	
 	public static final String GET 		= "GET";
 	public static final String POST 	= "POST";
 	public static final String DELETE	= "DELETE";
@@ -42,9 +47,22 @@ public class CRUDService extends HttpServlet {
     
     @Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-    	processHttpMethods(request, response);
-    	
-    	
+
+    	boolean isAbout = request.getMethod().equals(GET) && request.getPathInfo().equals("/about");
+    	if(isAbout)
+    	{
+			try {
+				RestApiUtil.processHttpResp(response, 
+						HttpServletResponse.SC_NO_CONTENT, 
+						TYPE_APP_JSON, getAbout().toString());
+			} catch (IOException e) {
+				throw new ServletException(e);
+			}
+    	}
+    	else
+    	{
+    		processHttpMethods(request, response);
+    	}
 	}
 
     @Override
@@ -61,6 +79,14 @@ public class CRUDService extends HttpServlet {
 	protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException {
     	processHttpMethods(request, response);
 	}
+    
+    private JSONObject getAbout()
+    {
+    	JSONObject json = new JSONObject();
+    	json.put("jsoncrud.restapi", _VERSION);
+    	json.put("jsoncrud.framework",JsonCrudRestUtil.getJsonCrudVersion());
+    	return json;
+    }
 
     private void processHttpMethods(HttpServletRequest req, HttpServletResponse res) throws ServletException
     {
@@ -82,11 +108,11 @@ System.out.println();
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
 		String sCrudKey = sPaths[0];
-		System.out.println("sCrudKey ["+ sCrudKey+"]");
 		
-		Map<String, Map<String, String>> mapQueryParams = CRUDServiceUtil.getQueryParamsMap(req);
+
 		Map<String, String> mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sCrudKey);
-		
+		if(mapCrudConfig==null)
+			mapCrudConfig = new HashMap<String, String>();
 		//
 		CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
 		if(sPaths.length==2)
