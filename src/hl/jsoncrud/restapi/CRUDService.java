@@ -22,6 +22,7 @@ public class CRUDService extends HttpServlet {
 	private static final long serialVersionUID 		= 1561775564425837002L;
 
 	protected final static String TYPE_APP_JSON 	= "application/json"; 
+	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
 
 	private static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
 	private static String _RESTAPI_ID_ATTRNAME				= "restapi.id";
@@ -93,6 +94,7 @@ public class CRUDService extends HttpServlet {
     	String sPathInfo 			= req.getPathInfo();  //{crudkey}/xx/xx
     	
     	JSONObject jsonResult 		= null;
+    	JSONObject jsonErrors 		= new JSONObject();
     	
     	HttpResp httpReq = new HttpResp();
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
@@ -132,13 +134,7 @@ System.out.println();
 		ICRUDServicePlugin plugin = null;
 		try {
 			plugin = getPlugin(mapCrudConfig);
-		} catch (JsonCrudException e1) {
-			throw new ServletException(e1);
-		}
-		
-		crudReq = preProcess(plugin, crudReq);
-		
- 		try {
+			crudReq = preProcess(plugin, crudReq);
 			
 			if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
 			{
@@ -233,12 +229,27 @@ System.out.println();
 				httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
 			}
 			httpReq.setContent_data(jsonResult.toString());
-			
 			httpReq = postProcess(plugin, crudReq, httpReq);
-			RestApiUtil.processHttpResp(res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data());
 			
-		} catch (Exception e) {
-			throw new ServletException(e);
+		} catch (JsonCrudException e) {
+
+			JSONArray jArrErrors = new JSONArray();
+			
+			if(jsonErrors.has("errors"))
+				jArrErrors = jsonErrors.getJSONArray("errors");
+			
+			jArrErrors.put(e.getErrorCode()+" : "+e.getErrorMsg());
+			
+			httpReq.setContent_type(TYPE_APP_JSON);
+			httpReq.setContent_data(jArrErrors.toString());
+			httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
+			httpReq.setHttp_status_message(e.getErrorMsg());
+		}
+		
+		try {
+			RestApiUtil.processHttpResp(res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data());
+		} catch (IOException ex) {
+			throw new ServletException(ex.getClass().getSimpleName(), ex);
 		}
     }
     
@@ -290,11 +301,11 @@ System.out.println();
 	    	try {
 				plugin = (ICRUDServicePlugin) Class.forName(sPluginClassName).newInstance();
 			} catch (InstantiationException e) {
-				throw new JsonCrudException("PLUGIN_EXCEPTION", e.getMessage());
+				throw new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, e);
 			} catch (IllegalAccessException e) {
-				throw new JsonCrudException("PLUGIN_EXCEPTION", e.getMessage());
+				throw new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, e);
 			} catch (ClassNotFoundException e) {
-				throw new JsonCrudException("PLUGIN_EXCEPTION", e.getMessage());
+				throw new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, e);
 			}
     	}
     	return plugin;
