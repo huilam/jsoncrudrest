@@ -253,7 +253,7 @@ System.out.println();
 			httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
 			httpReq.setHttp_status_message(e.getErrorMsg());
 			
-			httpReq = postProcess(plugin, crudReq, httpReq);
+			httpReq = handleException(plugin, crudReq, httpReq, e);
 		}
 		
 		try {
@@ -302,7 +302,7 @@ System.out.println();
     	return aPlugin.postProcess(aCrudReq, aHttpResp);
     }
     
-    public HttpResp postProcess(
+    public HttpResp handleException(
     		ICRUDServicePlugin aPlugin, 
     		CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException)
     {
