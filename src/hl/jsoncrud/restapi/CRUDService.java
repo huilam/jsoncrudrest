@@ -252,6 +252,8 @@ System.out.println();
 			httpReq.setContent_data(jArrErrors.toString());
 			httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
 			httpReq.setHttp_status_message(e.getErrorMsg());
+			
+			httpReq = postProcess(plugin, crudReq, httpReq);
 		}
 		
 		try {
@@ -298,6 +300,15 @@ System.out.println();
     	if(aPlugin==null)
     		return aHttpResp;
     	return aPlugin.postProcess(aCrudReq, aHttpResp);
+    }
+    
+    public HttpResp postProcess(
+    		ICRUDServicePlugin aPlugin, 
+    		CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException)
+    {
+    	if(aPlugin==null)
+    		return aHttpResp;
+    	return aPlugin.handleException(aCrudReq, aHttpResp, aException);
     }
     
     private ICRUDServicePlugin getPlugin(Map<String, String> aMapCrudConfig) throws JsonCrudException
