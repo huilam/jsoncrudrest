@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-
 import org.json.JSONObject;
-
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException;
-
 import hl.jsoncrud.common.http.RestApiUtil;
 
 public class CRUDServiceReq {
@@ -67,7 +63,7 @@ public class CRUDServiceReq {
 		{
 			try {
 				this.fetchlimit = Long.parseLong(sFetchLimit);
-			} catch(ParseException ex)
+			} catch(NumberFormatException ex)
 			{
 				this.fetchlimit = 0;
 			}
