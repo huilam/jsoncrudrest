@@ -3,7 +3,7 @@
 1. Download and setup 
    1.1 Apache tomcat application server from https://tomcat.apache.org/download-80.cgi
    1.2 Postgres database server from https://www.postgresql.org/download/
-2. Deploy 'jsoncrudrest.war' to tomcat 
+2. Download https://github.com/huilam/jsoncrudrest/blob/master/releases/jsoncrudrest.war and deploy to tomcat 
 3. Create sample application database schema by execute "test/01-create-schema.sql"
 4. Make sure "test/jsoncrud.properties" is in classpath
 5. Uses REST client such as PostMan or Web Browser to test the REST API
