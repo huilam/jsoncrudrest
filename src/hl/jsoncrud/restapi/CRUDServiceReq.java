@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONObject;
 
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException;
+
 import hl.jsoncrud.common.http.RestApiUtil;
 
 public class CRUDServiceReq {
@@ -29,6 +31,8 @@ public class CRUDServiceReq {
 	private List<String> listReturns 	= null;
 	private long pagination_startfrom	= 0;
 	private long pagination_fetchsize	= 0;
+	
+	private long fetchlimit				= 0;
 	//
 	
 	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap)
@@ -36,10 +40,10 @@ public class CRUDServiceReq {
 		this.httpServletReq = aReq;
 		this.mapConfigs = aCrudConfigMap;
 			
-		init(aReq);
+		init(aReq, aCrudConfigMap);
 	}
 	
-	private void init(HttpServletRequest aReq)
+	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig)
 	{
 		this.urlPath = aReq.getPathInfo();  //without context root
 		
@@ -57,7 +61,17 @@ public class CRUDServiceReq {
 		long[] lStartNFetchSize = CRUDServiceUtil.getPaginationStartNFetchSize(mapQueryParams);
 		this.pagination_startfrom = lStartNFetchSize[0];
 		this.pagination_fetchsize = lStartNFetchSize[1];
-
+		
+		String sFetchLimit = aMapCrudConfig.get(CRUDService._RESTAPI_FETCH_LIMIT);
+		if(sFetchLimit!=null)
+		{
+			try {
+				this.fetchlimit = Long.parseLong(sFetchLimit);
+			} catch(ParseException ex)
+			{
+				this.fetchlimit = 0;
+			}
+		}
 	}
 	///
 	
@@ -174,6 +188,11 @@ public class CRUDServiceReq {
 	public HttpServletRequest getHttpServletReq()
 	{
 		return this.httpServletReq;
+	}
+	
+	public long getFetchLimit()
+	{
+		return this.fetchlimit;
 	}
 	
 	public String toString()

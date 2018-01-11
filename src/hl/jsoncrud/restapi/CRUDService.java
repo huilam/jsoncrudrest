@@ -24,8 +24,9 @@ public class CRUDService extends HttpServlet {
 	protected final static String TYPE_APP_JSON 	= "application/json"; 
 	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
 
-	private static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
-	private static String _RESTAPI_ID_ATTRNAME				= "restapi.id";
+	protected static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
+	protected static String _RESTAPI_ID_ATTRNAME				= "restapi.id";
+	protected static String _RESTAPI_FETCH_LIMIT				= "restapi.fetch.limit";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
 	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;
@@ -141,11 +142,18 @@ System.out.println();
 				switch (sPaths.length)
 				{
 					case 1 : //get list
+						
+						long lfetchSize = crudReq.getPaginationFetchSize();
+						
+						if(lfetchSize==0 && crudReq.getFetchLimit()>0)
+						{
+							lfetchSize = crudReq.getFetchLimit();
+						}
 
 						jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
 								crudReq.getCrudFilters(), 
 								crudReq.getPaginationStartFrom(),
-								crudReq.getPaginationFetchSize(), 
+								lfetchSize, 
 								crudReq.getCrudSorting(),
 								crudReq.getCrudReturns()
 								);
