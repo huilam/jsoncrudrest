@@ -8,7 +8,7 @@
   
   	<servlet>
 	    <servlet-name>CRUDService</servlet-name>
-	    <servlet-class>hl.jsoncrud.restapi.CRUDService</servlet-class>
+	    <servlet-class>hl.jsoncrudrest.restapi.CRUDService</servlet-class>
 	</servlet>
   <servlet-mapping>
     <servlet-name>CRUDService</servlet-name>
