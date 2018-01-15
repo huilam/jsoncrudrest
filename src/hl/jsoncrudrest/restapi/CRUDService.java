@@ -1,4 +1,4 @@
-package hl.jsoncrud.restapi;
+package hl.jsoncrudrest.restapi;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -14,8 +14,8 @@ import org.json.JSONObject;
 import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudRestUtil;
-import hl.jsoncrud.common.http.HttpResp;
-import hl.jsoncrud.common.http.RestApiUtil;
+import hl.common.http.HttpResp;
+import hl.common.http.RestApiUtil;
 
 public class CRUDService extends HttpServlet {
 

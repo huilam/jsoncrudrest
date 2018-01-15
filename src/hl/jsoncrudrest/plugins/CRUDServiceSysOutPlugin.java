@@ -1,9 +1,9 @@
-package hl.jsoncrud.plugins;
+package hl.jsoncrudrest.plugins;
 
+import hl.common.http.HttpResp;
 import hl.jsoncrud.JsonCrudException;
-import hl.jsoncrud.common.http.HttpResp;
-import hl.jsoncrud.restapi.CRUDServiceReq;
-import hl.jsoncrud.restapi.ICRUDServicePlugin;
+import hl.jsoncrudrest.restapi.CRUDServiceReq;
+import hl.jsoncrudrest.restapi.ICRUDServicePlugin;
 
 public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 

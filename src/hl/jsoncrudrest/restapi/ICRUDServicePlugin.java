@@ -1,8 +1,8 @@
-package hl.jsoncrud.restapi;
+package hl.jsoncrudrest.restapi;
 
 import hl.jsoncrud.JsonCrudException;
-import hl.jsoncrud.common.http.HttpResp;
-import hl.jsoncrud.restapi.CRUDServiceReq;
+import hl.common.http.HttpResp;
+import hl.jsoncrudrest.restapi.CRUDServiceReq;
 
 public interface ICRUDServicePlugin {
 	

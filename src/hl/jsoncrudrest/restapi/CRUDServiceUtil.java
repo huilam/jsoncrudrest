@@ -1,4 +1,4 @@
-package hl.jsoncrud.restapi;
+package hl.jsoncrudrest.restapi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
