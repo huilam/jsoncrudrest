@@ -21,14 +21,15 @@ public class CRUDServiceReq {
 	private Map<String, String> mapConfigs	= null;
 	
 	//
-	private String jsonCrudKey 			= null;	
-	private JSONObject jsonFilters 		= null;	
-	private List<String> listSorting 	= null;
-	private List<String> listReturns 	= null;
-	private long pagination_startfrom	= 0;
-	private long pagination_fetchsize	= 0;
+	private String jsonCrudKey 				= null;	
+	private JSONObject jsonFilters 			= null;	
+	private JSONObject jsonEchoAttrs 		= null;
+	private List<String> listSorting 		= null;
+	private List<String> listReturns 		= null;
+	private long pagination_startfrom		= 0;
+	private long pagination_fetchsize		= 0;
 	
-	private long fetchlimit				= 0;
+	private long fetchlimit					= 0;
 	//
 	
 	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap)
@@ -66,6 +67,25 @@ public class CRUDServiceReq {
 			} catch(NumberFormatException ex)
 			{
 				this.fetchlimit = 0;
+			}
+		}
+		
+		String sJsonAttrEchoPrefix = aMapCrudConfig.get(CRUDService._RESTAPI_ECHO_JSONATTR_PREFIX);
+		if(sJsonAttrEchoPrefix!=null && sJsonAttrEchoPrefix.trim().length()>0)
+		{
+			if(this.reqInputContentData!=null && this.reqInputContentData.length()>0)
+			{
+				if(this.reqInputContentData.startsWith("{"))
+				{
+					JSONObject jsonTmp = new JSONObject(this.reqInputContentData);
+					for(String sKey : jsonTmp.keySet())
+					{
+						if(sKey.startsWith(sJsonAttrEchoPrefix))
+						{
+							jsonEchoAttrs.put(sKey, jsonTmp.get(sKey));
+						}
+					}
+				}
 			}
 		}
 	}
@@ -120,6 +140,10 @@ public class CRUDServiceReq {
 		return listReturns;
 	}	
 	
+	public JSONObject getEchoJsonAttrs()
+	{
+		return jsonEchoAttrs;
+	}
 	
 	public List<String> getCrudSorting()
 	{
@@ -194,16 +218,20 @@ public class CRUDServiceReq {
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer();
-		sb.append("req.getPathInfo():").append(getHttpServletReq().getPathInfo());
-		sb.append("\ngetCrudKey():").append(getCrudKey());
-		sb.append("\ngetHttpMethod():").append(getHttpMethod());
-		sb.append("\ngetInputContentType():").append(getInputContentType());
-		sb.append("\ngetInputContentData():").append(getInputContentData());
-		sb.append("\ngetCrudFilters():").append(getCrudFilters());
-		sb.append("\ngetCrudSorting():").append(getCrudSorting());
-		sb.append("\ngetCrudReturns():").append(getCrudReturns());
-		sb.append("\ngetPaginationStartFrom():").append(getPaginationStartFrom());
-		sb.append("\ngetPaginationFetchSize():").append(getPaginationFetchSize());
+		sb.append("req.getPathInfo:").append(getHttpServletReq().getPathInfo());
+		sb.append("\n").append("CrudKey:").append(getCrudKey());
+		sb.append("\n").append("HttpMethod:").append(getHttpMethod());
+		sb.append("\n").append("InputContentType:").append(getInputContentType());
+		sb.append("\n").append("InputContentData:").append(getInputContentData());
+		sb.append("\n").append("CrudFilters:").append(getCrudFilters());
+		sb.append("\n").append("CrudSorting:").append(getCrudSorting());
+		sb.append("\n").append("CrudReturns:").append(getCrudReturns());
+		sb.append("\n").append("PaginationStartFrom:").append(getPaginationStartFrom());
+		sb.append("\n").append("PaginationFetchSize:").append(getPaginationFetchSize());
+		//
+		sb.append("\n").append("FetchLimit:").append(getFetchLimit());
+		sb.append("\n").append("EchoAttrs:").append(getEchoJsonAttrs());
+		
 		return sb.toString();
 	}
 }

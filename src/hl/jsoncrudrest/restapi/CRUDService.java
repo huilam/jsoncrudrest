@@ -25,8 +25,9 @@ public class CRUDService extends HttpServlet {
 	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
 
 	protected static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
-	protected static String _RESTAPI_ID_ATTRNAME				= "restapi.id";
-	protected static String _RESTAPI_FETCH_LIMIT				= "restapi.fetch.limit";
+	protected static String _RESTAPI_ID_ATTRNAME			= "restapi.id";
+	protected static String _RESTAPI_FETCH_LIMIT			= "restapi.fetch.limit";
+	protected static String _RESTAPI_ECHO_JSONATTR_PREFIX	= "echo.jsonattr.prefix";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
 	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;
@@ -297,6 +298,22 @@ System.out.println();
     		ICRUDServicePlugin aPlugin, 
     		CRUDServiceReq aCrudReq, HttpResp aHttpResp)
     {
+    	if(aCrudReq.getEchoJsonAttrs()!=null)
+    	{
+    		if(aHttpResp.getContent_data()!=null && aHttpResp.getContent_data().startsWith("{"))
+    		{
+    			JSONObject jsonEcho = aCrudReq.getEchoJsonAttrs();
+    			JSONObject json = new JSONObject(aHttpResp.getContent_data());
+    			//
+    			for(String sEchoKey : jsonEcho.keySet())
+    			{
+    				Object oEchoVal = jsonEcho.get(sEchoKey);
+    				json.put(sEchoKey, oEchoVal);
+    			}
+    			aHttpResp.setContent_data(json.toString());
+    		}
+    	}
+    	
     	if(aPlugin==null)
     		return aHttpResp;
     	return aPlugin.postProcess(aCrudReq, aHttpResp);
