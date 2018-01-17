@@ -42,7 +42,34 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 		System.out.println("httpStatusMsg="+aHttpResp.getHttp_status_message());
 		System.out.println("contentType="+aHttpResp.getContent_type());
 		System.out.println("contentData="+aHttpResp.getContent_data());
-		System.out.println("Exception="+aException.getMessage());
+		
+		if(aException!=null)
+		{
+			System.out.println("Exception="+aException.getMessage());
+			
+			Throwable t = aException.getCause();
+			if(t!=null)
+			{
+				System.out.println("Cause="+t.getMessage());
+			}
+			
+			StackTraceElement[] stackTraces = aException.getStackTrace();
+			if(stackTraces!=null)
+			{
+				StringBuffer sb = new StringBuffer();
+				for(int i=0; i<10; i++)
+				{
+					StackTraceElement e = stackTraces[i];
+					sb.append(" ").append(e.getClassName()).append(":").append(e.getLineNumber()).append("\n");
+				}
+				System.out.println("StackTrace="+sb.toString());
+			}
+		}
+		else
+		{
+			System.out.println("Exception="+aException);
+		}
+		
 		System.out.println();
 		return aHttpResp;
 	}

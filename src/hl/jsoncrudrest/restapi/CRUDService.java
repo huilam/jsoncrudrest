@@ -237,7 +237,10 @@ System.out.println();
 			{
 				httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
 			}
-			httpReq.setContent_data(jsonResult.toString());
+			if(jsonResult!=null)
+			{
+				httpReq.setContent_data(jsonResult.toString());
+			}
 			httpReq = postProcess(plugin, crudReq, httpReq);
 			
 		} catch (JsonCrudException e) {
