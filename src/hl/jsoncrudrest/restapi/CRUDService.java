@@ -27,7 +27,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
 	protected static String _RESTAPI_ID_ATTRNAME			= "restapi.id";
 	protected static String _RESTAPI_FETCH_LIMIT			= "restapi.fetch.limit";
-	protected static String _RESTAPI_ECHO_JSONATTR_PREFIX	= "echo.jsonattr.prefix";
+	protected static String _RESTAPI_ECHO_JSONATTR_PREFIX	= "restapi.echo.jsonattr.prefix";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
 	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;

@@ -1,6 +1,7 @@
 package hl.jsoncrudrest.restapi;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,23 +71,46 @@ public class CRUDServiceReq {
 			}
 		}
 		
+		//
 		String sJsonAttrEchoPrefix = aMapCrudConfig.get(CRUDService._RESTAPI_ECHO_JSONATTR_PREFIX);
 		if(sJsonAttrEchoPrefix!=null && sJsonAttrEchoPrefix.trim().length()>0)
 		{
-			if(this.reqInputContentData!=null && this.reqInputContentData.length()>0)
+			jsonEchoAttrs = new JSONObject();
+			//
+			if(this.reqInputContentData!=null && this.reqInputContentData.trim().startsWith("{"))
 			{
-				if(this.reqInputContentData.startsWith("{"))
+				JSONObject jsonTmp = new JSONObject(this.reqInputContentData);
+				for(String sKey : jsonTmp.keySet())
 				{
-					JSONObject jsonTmp = new JSONObject(this.reqInputContentData);
-					for(String sKey : jsonTmp.keySet())
+					if(sKey.startsWith(sJsonAttrEchoPrefix))
 					{
-						if(sKey.startsWith(sJsonAttrEchoPrefix))
-						{
-							jsonEchoAttrs.put(sKey, jsonTmp.get(sKey));
-						}
+						jsonEchoAttrs.put(sKey, jsonTmp.get(sKey));
 					}
 				}
 			}
+			
+			// http headers
+			Enumeration<String> e = aReq.getHeaderNames();
+			while(e.hasMoreElements())
+			{
+				String sHeaderName = e.nextElement();
+				if(sHeaderName.startsWith(sJsonAttrEchoPrefix))
+				{
+					jsonEchoAttrs.put(sHeaderName, aReq.getHeader(sHeaderName));
+				}
+			}
+			// query parameters
+			e = aReq.getParameterNames();
+			while(e.hasMoreElements())
+			{
+				String sParamName = e.nextElement();
+				if(sParamName.startsWith(sJsonAttrEchoPrefix))
+				{
+					String sParamVal = aReq.getParameter(sParamName);
+					jsonEchoAttrs.put(sParamName, sParamVal);
+				}
+			}
+			
 		}
 	}
 	///
