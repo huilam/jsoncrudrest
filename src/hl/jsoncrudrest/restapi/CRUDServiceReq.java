@@ -1,53 +1,41 @@
 package hl.jsoncrudrest.restapi;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
-import hl.common.http.RestApiUtil;
+import hl.restapiservices.RESTServiceReq;
 
-public class CRUDServiceReq {
+public class CRUDServiceReq extends RESTServiceReq {
 
 	//
-	private String urlPath 						= null;
-	private HttpServletRequest httpServletReq	= null;
-	//
-	private String reqInputContentType		= null;
-	private String reqInputContentData		= null;
-	
+	private String urlPath 					= null;
+	//	
 	private Map<String, String> mapConfigs	= null;
-	
 	//
 	private String jsonCrudKey 				= null;	
-	private JSONObject jsonFilters 			= null;	
-	private JSONObject jsonEchoAttrs 		= null;
+	private JSONObject jsonFilters 			= null;
 	private List<String> listSorting 		= null;
 	private List<String> listReturns 		= null;
 	private long pagination_startfrom		= 0;
 	private long pagination_fetchsize		= 0;
 	
 	private long fetchlimit					= 0;
+	private boolean isSkipJsonCrudDbProcess	= false;
 	//
 	
 	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap)
 	{
-		this.httpServletReq = aReq;
-		this.mapConfigs = aCrudConfigMap;
-			
+		super(aReq, aCrudConfigMap);
 		init(aReq, aCrudConfigMap);
 	}
 	
 	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig)
 	{
-		this.urlPath = aReq.getPathInfo();  //without context root
-		
-		this.reqInputContentType = aReq.getContentType();
-		this.reqInputContentData = RestApiUtil.getReqContent(aReq);
-		
+	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(this.urlPath);
 		this.jsonCrudKey = sPaths[0];
 		
@@ -70,48 +58,6 @@ public class CRUDServiceReq {
 				this.fetchlimit = 0;
 			}
 		}
-		
-		//
-		String sJsonAttrEchoPrefix = aMapCrudConfig.get(CRUDService._RESTAPI_ECHO_JSONATTR_PREFIX);
-		if(sJsonAttrEchoPrefix!=null && sJsonAttrEchoPrefix.trim().length()>0)
-		{
-			jsonEchoAttrs = new JSONObject();
-			//
-			if(this.reqInputContentData!=null && this.reqInputContentData.trim().startsWith("{"))
-			{
-				JSONObject jsonTmp = new JSONObject(this.reqInputContentData);
-				for(String sKey : jsonTmp.keySet())
-				{
-					if(sKey.startsWith(sJsonAttrEchoPrefix))
-					{
-						jsonEchoAttrs.put(sKey, jsonTmp.get(sKey));
-					}
-				}
-			}
-			
-			// http headers
-			Enumeration<String> e = aReq.getHeaderNames();
-			while(e.hasMoreElements())
-			{
-				String sHeaderName = e.nextElement();
-				if(sHeaderName.startsWith(sJsonAttrEchoPrefix))
-				{
-					jsonEchoAttrs.put(sHeaderName, aReq.getHeader(sHeaderName));
-				}
-			}
-			// query parameters
-			e = aReq.getParameterNames();
-			while(e.hasMoreElements())
-			{
-				String sParamName = e.nextElement();
-				if(sParamName.startsWith(sJsonAttrEchoPrefix))
-				{
-					String sParamVal = aReq.getParameter(sParamName);
-					jsonEchoAttrs.put(sParamName, sParamVal);
-				}
-			}
-			
-		}
 	}
 	///
 	
@@ -120,6 +66,14 @@ public class CRUDServiceReq {
 		return jsonCrudKey;
 	}
 	
+	public boolean isSkipJsonCrudDbProcess() {
+		return isSkipJsonCrudDbProcess;
+	}
+
+	public void setSkipJsonCrudDbProcess(boolean isSkipJsonCrudDbProcess) {
+		this.isSkipJsonCrudDbProcess = isSkipJsonCrudDbProcess;
+	}
+
 	public Map<String, String> getCrudConfigMap()
 	{
 		if(mapConfigs==null)
@@ -164,11 +118,6 @@ public class CRUDServiceReq {
 		return listReturns;
 	}	
 	
-	public JSONObject getEchoJsonAttrs()
-	{
-		return jsonEchoAttrs;
-	}
-	
 	public List<String> getCrudSorting()
 	{
 		if(listSorting==null)
@@ -202,36 +151,6 @@ public class CRUDServiceReq {
 	public void setPaginationFetchSize(long aFetchSize)
 	{
 		this.pagination_fetchsize = aFetchSize;
-	}
-	
-	public String getInputContentData()
-	{
-		return this.reqInputContentData;
-	}
-	
-	public void setInputContentData(String aContentData)
-	{
-		this.reqInputContentData = aContentData;
-	}
-
-	public String getInputContentType()
-	{
-		return this.reqInputContentType;
-	}
-	
-	public void setInputContentType(String aContentType)
-	{
-		this.reqInputContentType = aContentType;
-	}		
-	
-	public String getHttpMethod()
-	{
-		return this.httpServletReq.getMethod();
-	}
-	
-	public HttpServletRequest getHttpServletReq()
-	{
-		return this.httpServletReq;
 	}
 	
 	public long getFetchLimit()
