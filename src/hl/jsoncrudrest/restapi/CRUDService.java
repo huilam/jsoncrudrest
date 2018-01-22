@@ -249,7 +249,7 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
 						switch (iUrlBranch)
 						{
 						 	//by id
-							case 1 :
+							case 2 :
 								JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
 								JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
 								
