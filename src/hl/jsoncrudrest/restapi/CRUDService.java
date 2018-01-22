@@ -39,7 +39,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.2.0";
+	private static String _VERSION = "0.2.1";
 	
 	
 	private static Map<String, String> mapUrlCrudkey = null;
@@ -124,7 +124,7 @@ public class CRUDService extends HttpServlet {
     	HttpResp httpReq = new HttpResp();
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
     	
-    	int iBaseUrlLength = 0;
+    	int iBaseUrlLengthAdj = 0;
  
 /*
 System.out.println("sReqUri:"+sReqUri);
@@ -147,7 +147,7 @@ System.out.println();
 				if(sPathInfo.startsWith(sMapBaseUrl))
 				{
 					sURLmappedCrudkey = mapUrlCrudkey.get(sMapBaseUrl);
-					iBaseUrlLength =  CRUDServiceUtil.getUrlSegments(sMapBaseUrl).length;
+					iBaseUrlLengthAdj =  CRUDServiceUtil.getUrlSegments(sMapBaseUrl).length-1;
 					break;
 				}
 			}
@@ -160,15 +160,18 @@ System.out.println();
 					sCrudKey = sURLmappedCrudkey;
 				}
 			}
-			
-			
 		}
-		
 		
 		if(mapCrudConfig!=null)
 		{
 			
-			int iUrlBranch = sPaths.length - iBaseUrlLength + 1; 
+			int iUrlBranch = sPaths.length - iBaseUrlLengthAdj; 
+
+			/*
+System.out.println("iUrlBranch="+iUrlBranch);
+System.out.println("sPaths.length="+sPaths.length);
+System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
+*/
 			
 			boolean isFilterById = iUrlBranch==2;
 			
