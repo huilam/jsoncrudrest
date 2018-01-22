@@ -98,7 +98,7 @@ public class CRUDService extends HttpServlet {
     	JSONObject jsonResult 		= null;
     	JSONObject jsonErrors 		= new JSONObject();
     	
-    	HttpResp httpReq = new HttpResp(req);
+    	HttpResp httpReq = new HttpResp();
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
  
 /*
