@@ -12,11 +12,10 @@ import hl.restapiservices.RESTServiceReq;
 public class CRUDServiceReq extends RESTServiceReq {
 
 	//
-	private String urlPath 					= null;
 	//	
 	private Map<String, String> mapConfigs	= null;
+	private String jsonCrudKey				= null;
 	//
-	private String jsonCrudKey 				= null;	
 	private JSONObject jsonFilters 			= null;
 	private List<String> listSorting 		= null;
 	private List<String> listReturns 		= null;
@@ -35,9 +34,10 @@ public class CRUDServiceReq extends RESTServiceReq {
 	
 	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig)
 	{
-	
-		String[] sPaths = CRUDServiceUtil.getUrlSegments(this.urlPath);
-		this.jsonCrudKey = sPaths[0];
+		if(this.urlPath!=null)
+		{		
+			String[] sPaths = CRUDServiceUtil.getUrlSegments(this.urlPath);
+		}
 		
 		Map<String, Map<String, String>> mapQueryParams = CRUDServiceUtil.getQueryParamsMap(aReq);
 		jsonFilters = CRUDServiceUtil.getFilters(mapQueryParams);		
@@ -61,9 +61,14 @@ public class CRUDServiceReq extends RESTServiceReq {
 	}
 	///
 	
+	public void setCrudKey(String aCrudkey)
+	{
+		this.jsonCrudKey = aCrudkey;
+	}
+	
 	public String getCrudKey()
 	{
-		return jsonCrudKey;
+		return this.jsonCrudKey;
 	}
 	
 	public boolean isSkipJsonCrudDbProcess() {

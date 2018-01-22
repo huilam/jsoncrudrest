@@ -3,6 +3,9 @@ package hl.jsoncrudrest.restapi;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -23,7 +26,7 @@ public class CRUDService extends HttpServlet {
 
 	protected final static String TYPE_APP_JSON 	= "application/json"; 
 	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
-
+	
 	protected static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
 	protected static String _RESTAPI_ID_ATTRNAME			= "restapi.id";
 	protected static String _RESTAPI_FETCH_LIMIT			= "restapi.fetch.limit";
@@ -39,6 +42,9 @@ public class CRUDService extends HttpServlet {
 	private static String _VERSION = "0.2.0";
 	
 	
+	private static Map<String, String> mapUrlCrudkey = null;
+	private static Pattern pattURLmapKey = Pattern.compile("crud\\.([a-zA-Z_]+?)\\.restapi\\.baseurl"); 	
+	
 	public static final String GET 		= "GET";
 	public static final String POST 	= "POST";
 	public static final String DELETE	= "DELETE";
@@ -46,6 +52,23 @@ public class CRUDService extends HttpServlet {
 
 	public CRUDService() {
         super();
+        
+        mapUrlCrudkey = new HashMap<String, String>();
+        
+        Map<String, String> mapConfigs = JsonCrudRestUtil.getCRUDMgr().getAllConfig();
+        for(String sKey : mapConfigs.keySet())
+        {
+        	Matcher m = pattURLmapKey.matcher(sKey);
+        	if(m.find())
+        	{
+        		String sCrudKey = m.group(1);
+        		String sURL = mapConfigs.get(sKey);
+        		if(sURL!=null && sURL.trim().length()>0)
+        		{
+        			mapUrlCrudkey.put(sURL, sCrudKey);
+        		}
+        	}
+        }
     }
     
     @Override
@@ -100,6 +123,8 @@ public class CRUDService extends HttpServlet {
     	
     	HttpResp httpReq = new HttpResp();
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
+    	
+    	int iBaseUrlLength = 0;
  
 /*
 System.out.println("sReqUri:"+sReqUri);
@@ -112,156 +137,191 @@ System.out.println();
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
 		String sCrudKey = sPaths[0];
-		
-
 		Map<String, String> mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sCrudKey);
 		if(mapCrudConfig==null)
-			mapCrudConfig = new HashMap<String, String>();
-		//
-		CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
-
-		if(sPaths.length==2)
 		{
-			String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
-			if(sIdFieldName==null || sIdFieldName.trim().length()==0)
-				sIdFieldName = "id";
-			
-			if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
-					|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
-					|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
+			String sURLmappedCrudkey = null;
+			//check url-crudkey mapping
+			for(String sMapBaseUrl : mapUrlCrudkey.keySet())
 			{
-				crudReq.addCrudFilter(sIdFieldName, sPaths[1]);
+				if(sPathInfo.startsWith(sMapBaseUrl))
+				{
+					sURLmappedCrudkey = mapUrlCrudkey.get(sMapBaseUrl);
+					iBaseUrlLength =  CRUDServiceUtil.getUrlSegments(sMapBaseUrl).length;
+					break;
+				}
 			}
+			
+			if(sURLmappedCrudkey!=null)
+			{
+				mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sURLmappedCrudkey);
+				if(mapCrudConfig!=null)
+				{
+					sCrudKey = sURLmappedCrudkey;
+				}
+			}
+			
+			
 		}
-		//
-		ICRUDServicePlugin plugin = null;
-		try {
-			plugin = getPlugin(mapCrudConfig);
-			crudReq = preProcess(plugin, crudReq);
+		
+		
+		if(mapCrudConfig!=null)
+		{
 			
-			if(!crudReq.isSkipJsonCrudDbProcess())
-			{
-				if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
-				{
-					switch (sPaths.length)
-					{
-						case 1 : //get list
-							
-							long lfetchSize = crudReq.getPaginationFetchSize();
-							
-							if(lfetchSize==0 && crudReq.getFetchLimit()>0)
-							{
-								lfetchSize = crudReq.getFetchLimit();
-							}
+			int iUrlBranch = sPaths.length - iBaseUrlLength + 1; 
+			
+			boolean isFilterById = iUrlBranch==2;
+			
+			//
+			CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
+			crudReq.setCrudKey(sCrudKey);
 	
-							jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
-									crudReq.getCrudFilters(), 
-									crudReq.getPaginationStartFrom(),
-									lfetchSize, 
-									crudReq.getCrudSorting(),
-									crudReq.getCrudReturns()
-									);
-							break;
-							
-						case 2 : //get id
-							jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
-							break;
-					}
-					
-					if(jsonResult!=null)
-					{
-						httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-					}
-					
-				}
-				else if(POST.equalsIgnoreCase(crudReq.getHttpMethod()))
+			if(isFilterById)
+			{
+				String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
+				if(sIdFieldName==null || sIdFieldName.trim().length()==0)
+					sIdFieldName = "id";
+				
+				if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
+						|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
+						|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 				{
-					jsonResult = JsonCrudRestUtil.create(sCrudKey, crudReq.getInputContentData());
-					
-					if(jsonResult!=null)
-					{
-						httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-					}
+					crudReq.addCrudFilter(sIdFieldName, sPaths[sPaths.length-1]);
 				}
-				else if(PUT.equalsIgnoreCase(crudReq.getHttpMethod()))
-				{
-					switch (sPaths.length)
-					{
-						case 2 :
-							JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
-							JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
-							
-							if(jsonArrResult!=null)
-							{
-								httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-								
-								if(jsonArrResult.length()==1)
-								{
-									jsonResult = jsonArrResult.getJSONObject(0);
-								}
-								else
-								{
-									jsonResult = toPaginationResult(jsonArrResult);
-								}
-							}
-							break;
-					}
-				}
-				else if(DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
-				{
-					JSONArray jsonArrResult = null;
+			}
+			//
 	
-					switch (sPaths.length)
+			
+			ICRUDServicePlugin plugin = null;
+			try {
+				plugin = getPlugin(mapCrudConfig);
+				crudReq = preProcess(plugin, crudReq);
+				
+				if(!crudReq.isSkipJsonCrudDbProcess())
+				{
+					if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
 					{
-						case 1 : //delete list
-							//??
-							break;
-						case 2 : //get id
-							jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, crudReq.getCrudFilters());
-							if(jsonArrResult!=null)
-							{
-								httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+						switch (iUrlBranch)
+						{
+							case 1 : //get list
 								
-								if(jsonArrResult.length()==1)
+								long lfetchSize = crudReq.getPaginationFetchSize();
+								
+								if(lfetchSize==0 && crudReq.getFetchLimit()>0)
 								{
-									jsonResult = jsonArrResult.getJSONObject(0);
+									lfetchSize = crudReq.getFetchLimit();
 								}
-								else
+		
+								jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
+										crudReq.getCrudFilters(), 
+										crudReq.getPaginationStartFrom(),
+										lfetchSize, 
+										crudReq.getCrudSorting(),
+										crudReq.getCrudReturns()
+										);
+								break;
+								
+							case 2 : //get id
+								jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
+								break;
+						}
+						
+						if(jsonResult!=null)
+						{
+							httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+						}
+						
+					}
+					else if(POST.equalsIgnoreCase(crudReq.getHttpMethod()))
+					{
+						jsonResult = JsonCrudRestUtil.create(sCrudKey, crudReq.getInputContentData());
+						
+						if(jsonResult!=null)
+						{
+							httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+						}
+					}
+					else if(PUT.equalsIgnoreCase(crudReq.getHttpMethod()))
+					{
+						switch (iUrlBranch)
+						{
+						 	//by id
+							case 1 :
+								JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
+								JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
+								
+								if(jsonArrResult!=null)
 								{
-									jsonResult = toPaginationResult(jsonArrResult);
+									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+									
+									if(jsonArrResult.length()==1)
+									{
+										jsonResult = jsonArrResult.getJSONObject(0);
+									}
+									else
+									{
+										jsonResult = toPaginationResult(jsonArrResult);
+									}
 								}
-							}
-							break;
+								break;
+						}
+					}
+					else if(DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
+					{
+						JSONArray jsonArrResult = null;
+		
+						switch (iUrlBranch)
+						{
+							case 1 : //delete list
+								//??
+								break;
+							case 2 : //get id
+								jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, crudReq.getCrudFilters());
+								if(jsonArrResult!=null)
+								{
+									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+									
+									if(jsonArrResult.length()==1)
+									{
+										jsonResult = jsonArrResult.getJSONObject(0);
+									}
+									else
+									{
+										jsonResult = toPaginationResult(jsonArrResult);
+									}
+								}
+								break;
+						}
 					}
 				}
+				///////////////////////////
+				
+				if(httpReq.getHttp_status() == HttpServletResponse.SC_OK);
+				{
+					httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
+				}
+				if(jsonResult!=null)
+				{
+					httpReq.setContent_data(jsonResult.toString());
+				}
+				httpReq = postProcess(plugin, crudReq, httpReq);
+				
+			} catch (JsonCrudException e) {
+	
+				JSONArray jArrErrors = new JSONArray();
+				
+				if(jsonErrors.has("errors"))
+					jArrErrors = jsonErrors.getJSONArray("errors");
+				
+				jArrErrors.put(e.getErrorCode()+" : "+e.getErrorMsg());
+				
+				httpReq.setContent_type(TYPE_APP_JSON);
+				httpReq.setContent_data(jArrErrors.toString());
+				httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
+				httpReq.setHttp_status_message(e.getErrorMsg());
+				
+				httpReq = handleException(plugin, crudReq, httpReq, e);
 			}
-			///////////////////////////
-			
-			if(httpReq.getHttp_status() == HttpServletResponse.SC_OK);
-			{
-				httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
-			}
-			if(jsonResult!=null)
-			{
-				httpReq.setContent_data(jsonResult.toString());
-			}
-			httpReq = postProcess(plugin, crudReq, httpReq);
-			
-		} catch (JsonCrudException e) {
-
-			JSONArray jArrErrors = new JSONArray();
-			
-			if(jsonErrors.has("errors"))
-				jArrErrors = jsonErrors.getJSONArray("errors");
-			
-			jArrErrors.put(e.getErrorCode()+" : "+e.getErrorMsg());
-			
-			httpReq.setContent_type(TYPE_APP_JSON);
-			httpReq.setContent_data(jArrErrors.toString());
-			httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
-			httpReq.setHttp_status_message(e.getErrorMsg());
-			
-			httpReq = handleException(plugin, crudReq, httpReq, e);
 		}
 		
 		try {
