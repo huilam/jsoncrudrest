@@ -1,7 +1,6 @@
 package hl.jsoncrudrest.restapi;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +12,6 @@ public class CRUDServiceReq extends RESTServiceReq {
 
 	//
 	//	
-	private Map<String, String> mapConfigs	= null;
 	private String jsonCrudKey				= null;
 	//
 	private JSONObject jsonFilters 			= null;
@@ -34,11 +32,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 	
 	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig)
 	{
-		if(this.urlPath!=null)
-		{		
-			String[] sPaths = CRUDServiceUtil.getUrlSegments(this.urlPath);
-		}
-		
+		addToConfigMap(aMapCrudConfig);
 		Map<String, Map<String, String>> mapQueryParams = CRUDServiceUtil.getQueryParamsMap(aReq);
 		jsonFilters = CRUDServiceUtil.getFilters(mapQueryParams);		
 		listSorting = CRUDServiceUtil.getSorting(mapQueryParams);
@@ -48,7 +42,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 		this.pagination_startfrom = lStartNFetchSize[0];
 		this.pagination_fetchsize = lStartNFetchSize[1];
 		
-		String sFetchLimit = aMapCrudConfig.get(CRUDService._RESTAPI_FETCH_LIMIT);
+		String sFetchLimit = getConfigMap().get(CRUDService._RESTAPI_FETCH_LIMIT);
 		if(sFetchLimit!=null)
 		{
 			try {
@@ -79,21 +73,6 @@ public class CRUDServiceReq extends RESTServiceReq {
 		this.isSkipJsonCrudDbProcess = isSkipJsonCrudDbProcess;
 	}
 
-	public Map<String, String> getCrudConfigMap()
-	{
-		if(mapConfigs==null)
-			return new HashMap<String, String>();
-		return mapConfigs;
-	}
-	
-	public Map<String, String> addCrudConfigMap(String aKey, String aValue)
-	{
-		if(mapConfigs==null)
-			mapConfigs = new HashMap<String, String>();
-		mapConfigs.put(aKey, aValue);
-		return mapConfigs;
-	}
-	
 	public JSONObject getCrudFilters()
 	{
 		if(jsonFilters==null)
