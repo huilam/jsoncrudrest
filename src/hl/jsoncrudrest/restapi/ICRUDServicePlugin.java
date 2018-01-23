@@ -6,9 +6,9 @@ import hl.jsoncrudrest.restapi.CRUDServiceReq;
 
 public interface ICRUDServicePlugin {
 	
-	public CRUDServiceReq preProcess(CRUDServiceReq aCrudReq);
+	public CRUDServiceReq preProcess(CRUDServiceReq aCrudReq) throws JsonCrudException;
 	
-	public HttpResp postProcess(CRUDServiceReq aCrudReq, HttpResp aHttpResp);
+	public HttpResp postProcess(CRUDServiceReq aCrudReq, HttpResp aHttpResp) throws JsonCrudException;
 	
 	public HttpResp handleException(CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aJsonCrudException);
 	

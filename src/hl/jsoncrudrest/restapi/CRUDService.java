@@ -357,7 +357,7 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
     
     public CRUDServiceReq preProcess(
     		ICRUDServicePlugin aPlugin, 
-    		CRUDServiceReq aCrudReq) 
+    		CRUDServiceReq aCrudReq) throws JsonCrudException
     {
     	if(aPlugin==null)
     		return aCrudReq;
@@ -366,7 +366,7 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
     
     public HttpResp postProcess(
     		ICRUDServicePlugin aPlugin, 
-    		CRUDServiceReq aCrudReq, HttpResp aHttpResp)
+    		CRUDServiceReq aCrudReq, HttpResp aHttpResp) throws JsonCrudException
     {
     	if(aCrudReq.getEchoJsonAttrs()!=null)
     	{
