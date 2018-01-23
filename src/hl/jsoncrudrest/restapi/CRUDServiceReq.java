@@ -7,7 +7,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
-import hl.restapiservices.RESTServiceReq;
+import hl.restapi.service.RESTServiceReq;
 
 public class CRUDServiceReq extends RESTServiceReq {
 
