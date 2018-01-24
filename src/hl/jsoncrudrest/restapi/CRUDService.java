@@ -155,13 +155,13 @@ System.out.println();
 		{
 			String sURLmappedCrudkey = null;
 			//check url-crudkey mapping
-			for(String sMapBaseUrl : mapUrlCrudkey.keySet())
+			for(String sOrgMapBaseUrl : mapUrlCrudkey.keySet())
 			{
-				sMapBaseUrl = appendSuffix(sMapBaseUrl, "/");
-				if(sPathInfo.startsWith(sMapBaseUrl))
+				String sCompareBaseUrl = appendSuffix(sOrgMapBaseUrl, "/");
+				if(sPathInfo.startsWith(sCompareBaseUrl))
 				{
-					sURLmappedCrudkey = mapUrlCrudkey.get(sMapBaseUrl);
-					iBaseUrlLengthAdj =  CRUDServiceUtil.getUrlSegments(sMapBaseUrl).length-1;
+					sURLmappedCrudkey = mapUrlCrudkey.get(sOrgMapBaseUrl);
+					iBaseUrlLengthAdj =  CRUDServiceUtil.getUrlSegments(sOrgMapBaseUrl).length-1;
 					break;
 				}
 			}
