@@ -113,6 +113,18 @@ public class CRUDService extends HttpServlet {
     	json.put("jsoncrud.framework",JsonCrudRestUtil.getJsonCrudVersion());
     	return json;
     }
+    
+    private String appendSuffix(String aString, String aSuffix)
+    {
+    	if(!aString.endsWith(aSuffix))
+    	{
+    		return aString + aSuffix;
+    	}
+    	else
+    	{
+    		return aString;
+    	}
+    }
 
     private void processHttpMethods(HttpServletRequest req, HttpServletResponse res) throws ServletException
     {
@@ -134,6 +146,7 @@ System.out.println("sInputContentType:"+sInputContentType);
 System.out.println("sInputData:"+sInputData);
 System.out.println();
 */
+    	sPathInfo = appendSuffix(sPathInfo, "/");
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
 		String sCrudKey = sPaths[0];
@@ -144,6 +157,7 @@ System.out.println();
 			//check url-crudkey mapping
 			for(String sMapBaseUrl : mapUrlCrudkey.keySet())
 			{
+				sMapBaseUrl = appendSuffix(sMapBaseUrl, "/");
 				if(sPathInfo.startsWith(sMapBaseUrl))
 				{
 					sURLmappedCrudkey = mapUrlCrudkey.get(sMapBaseUrl);
