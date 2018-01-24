@@ -30,6 +30,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
 	protected static String _RESTAPI_ID_ATTRNAME			= "restapi.id";
 	protected static String _RESTAPI_FETCH_LIMIT			= "restapi.fetch.limit";
+	protected static String _RESTAPI_RESULT_ONLY			= "restapi.result.only";	
 	protected static String _RESTAPI_ECHO_JSONATTR_PREFIX	= "restapi.echo.jsonattr.prefix";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
@@ -158,6 +159,28 @@ System.out.println();
 			for(String sOrgMapBaseUrl : mapUrlCrudkey.keySet())
 			{
 				String sCompareBaseUrl = appendSuffix(sOrgMapBaseUrl, "/");
+				
+		    	if(sCompareBaseUrl.indexOf('{')>-1 && sCompareBaseUrl.indexOf('}')>-1) 
+		    	{
+    				String[] sBaseUrlPaths = CRUDServiceUtil.getUrlSegments(sCompareBaseUrl);
+    				
+    				if(sPaths.length>=sBaseUrlPaths.length)
+    				{
+			    		for(int i=0; i<sBaseUrlPaths.length; i++)
+			    		{
+			    			String sUrlSegment = sBaseUrlPaths[i];
+			    			if(sUrlSegment.startsWith("{") && sUrlSegment.endsWith("}")) 
+			    			{
+			    				String sPathParamName 	= sUrlSegment.substring(1, sUrlSegment.length()-1);
+			    				String sPathParamValue 	= sPaths[i];
+			    				//TODO Path Param Map
+			    				sBaseUrlPaths[i] = sPathParamValue;
+			    			}
+			    		}
+    				}
+    				sCompareBaseUrl = "/"+String.join("/", sBaseUrlPaths)+"/";
+		    	}
+				
 				if(sPathInfo.startsWith(sCompareBaseUrl))
 				{
 					sURLmappedCrudkey = mapUrlCrudkey.get(sOrgMapBaseUrl);
@@ -319,8 +342,22 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
 				}
 				if(jsonResult!=null)
 				{
-					httpReq.setContent_data(jsonResult.toString());
+					boolean isResultOnly = "true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_RESULT_ONLY));
+					if(isResultOnly)
+					{
+						JSONArray jArrResult = JsonCrudRestUtil.getListResult(jsonResult);
+						if(jArrResult!=null)
+						{
+							httpReq.setContent_data(jArrResult.toString());
+						}
+					}
+					
+					if(httpReq.getContent_data()==null)
+						httpReq.setContent_data(jsonResult.toString());
 				}
+				
+				
+				
 				httpReq = postProcess(plugin, crudReq, httpReq);
 				
 			} catch (JsonCrudException e) {
