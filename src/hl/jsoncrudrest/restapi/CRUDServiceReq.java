@@ -6,6 +6,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
+
+import hl.jsoncrud.JsonCrudConfig;
 import hl.restapi.service.RESTServiceReq;
 
 public class CRUDServiceReq extends RESTServiceReq {
@@ -57,6 +59,11 @@ public class CRUDServiceReq extends RESTServiceReq {
 	
 	public void setCrudKey(String aCrudkey)
 	{
+		if(!aCrudkey.startsWith(JsonCrudConfig._PROP_KEY_CRUD+"."))
+		{
+			aCrudkey = JsonCrudConfig._PROP_KEY_CRUD+"."+aCrudkey;
+		}
+		
 		this.jsonCrudKey = aCrudkey;
 	}
 	

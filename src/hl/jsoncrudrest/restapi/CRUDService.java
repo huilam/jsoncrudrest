@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudRestUtil;
+import hl.restapi.service.RESTServiceReq;
 import hl.common.http.HttpResp;
 import hl.common.http.RestApiUtil;
 
@@ -27,11 +28,9 @@ public class CRUDService extends HttpServlet {
 	protected final static String TYPE_APP_JSON 	= "application/json"; 
 	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
 	
-	protected static String _RESTAPI_PLUGIN_IMPL_CLASSNAME 	= "restapi.plugin.implementation";
 	protected static String _RESTAPI_ID_ATTRNAME			= "restapi.id";
 	protected static String _RESTAPI_FETCH_LIMIT			= "restapi.fetch.limit";
 	protected static String _RESTAPI_RESULT_ONLY			= "restapi.result.only";	
-	protected static String _RESTAPI_ECHO_JSONATTR_PREFIX	= "restapi.echo.jsonattr.prefix";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
 	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;
@@ -44,7 +43,7 @@ public class CRUDService extends HttpServlet {
 	
 	
 	private static Map<String, String> mapUrlCrudkey = null;
-	private static Pattern pattURLmapKey = Pattern.compile("crud\\.([a-zA-Z_]+?)\\.restapi\\.baseurl"); 	
+	private static Pattern pattCrudKey = Pattern.compile("crud\\.([a-zA-Z_]+?)\\."); 	
 	
 	public static final String GET 		= "GET";
 	public static final String POST 	= "POST";
@@ -59,15 +58,18 @@ public class CRUDService extends HttpServlet {
         Map<String, String> mapConfigs = JsonCrudRestUtil.getCRUDMgr().getAllConfig();
         for(String sKey : mapConfigs.keySet())
         {
-        	Matcher m = pattURLmapKey.matcher(sKey);
-        	if(m.find())
+        	if(sKey.endsWith("."+RESTServiceReq._RESTAPI_BASE_URL))
         	{
-        		String sCrudKey = m.group(1);
-        		String sURL = mapConfigs.get(sKey);
-        		if(sURL!=null && sURL.trim().length()>0)
-        		{
-        			mapUrlCrudkey.put(sURL, sCrudKey);
-        		}
+        		Matcher m = pattCrudKey.matcher(sKey);
+	        	if(m.find())
+	        	{
+	        		String sCrudKey = m.group(1);
+	        		String sURL = mapConfigs.get(sKey);
+	        		if(sURL!=null && sURL.trim().length()>0)
+	        		{
+	        			mapUrlCrudkey.put(sURL, sCrudKey);
+	        		}
+	        	}
         	}
         }
     }
@@ -75,13 +77,18 @@ public class CRUDService extends HttpServlet {
     @Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 
-    	boolean isAbout = request.getMethod().equals(GET) && request.getPathInfo().equals("/about");
+    	String sHttpMethod = request.getMethod();
+    	String sPath = request.getPathInfo();
+    	
+    	boolean isAbout = sHttpMethod.equals(GET) && sPath.equals("/about");
     	if(isAbout)
     	{
 			try {
-				RestApiUtil.processHttpResp(response, 
-						HttpServletResponse.SC_NO_CONTENT, 
-						TYPE_APP_JSON, getAbout().toString());
+				RestApiUtil.processHttpResp(
+						response, 
+						HttpServletResponse.SC_OK, 
+						TYPE_APP_JSON, 
+						getAbout().toString());
 			} catch (IOException e) {
 				throw new ServletException(e);
 			}
@@ -137,6 +144,7 @@ public class CRUDService extends HttpServlet {
     	HttpResp httpReq = new HttpResp();
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
     	
+    	Map<String,String> mapPathParams = new HashMap<String, String>();
     	int iBaseUrlLengthAdj = 0;
  
 /*
@@ -173,7 +181,7 @@ System.out.println();
 			    			{
 			    				String sPathParamName 	= sUrlSegment.substring(1, sUrlSegment.length()-1);
 			    				String sPathParamValue 	= sPaths[i];
-			    				//TODO Path Param Map
+			    				mapPathParams.put(sPathParamName, sPathParamValue);
 			    				sBaseUrlPaths[i] = sPathParamValue;
 			    			}
 			    		}
@@ -215,6 +223,7 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
 			//
 			CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
 			crudReq.setCrudKey(sCrudKey);
+			crudReq.addUrlPathParam(mapPathParams);
 	
 			if(isFilterById)
 			{
@@ -452,7 +461,7 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
     private ICRUDServicePlugin getPlugin(Map<String, String> aMapCrudConfig) throws JsonCrudException
     {
 		ICRUDServicePlugin plugin = null;
-		String sPluginClassName = aMapCrudConfig.get(_RESTAPI_PLUGIN_IMPL_CLASSNAME);
+		String sPluginClassName = aMapCrudConfig.get(RESTServiceReq._RESTAPI_PLUGIN_IMPL_CLASSNAME);
     	if(sPluginClassName!=null && sPluginClassName.trim().length()>0)
     	{
 	    	try {
