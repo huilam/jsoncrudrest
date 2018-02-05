@@ -1,5 +1,7 @@
 package hl.jsoncrudrest.plugins;
 
+import java.util.Properties;
+
 import hl.common.http.HttpResp;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrudrest.restapi.CRUDServiceReq;
@@ -72,6 +74,10 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 		
 		System.out.println();
 		return aHttpResp;
+	}
+
+	public Properties getPluginProps() {
+		return null;
 	}
 	
 	
