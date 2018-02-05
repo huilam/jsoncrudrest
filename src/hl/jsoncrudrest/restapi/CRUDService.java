@@ -28,9 +28,9 @@ public class CRUDService extends HttpServlet {
 	protected final static String TYPE_APP_JSON 	= "application/json"; 
 	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
 	
-	protected static String _RESTAPI_ID_ATTRNAME			= "restapi.id";
-	protected static String _RESTAPI_FETCH_LIMIT			= "restapi.fetch.limit";
-	protected static String _RESTAPI_RESULT_ONLY			= "restapi.result.only";	
+	protected static String _RESTAPI_ID_ATTRNAME	= "restapi.id";
+	protected static String _RESTAPI_FETCH_LIMIT	= "restapi.fetch.limit";
+	protected static String _RESTAPI_RESULT_ONLY	= "restapi.result.only";	
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
 	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;
@@ -39,8 +39,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.2.1";
-	
+	private static String _VERSION = "0.2.3";
 	
 	private static Map<String, String> mapUrlCrudkey = null;
 	private static Pattern pattCrudKey = Pattern.compile("crud\\.([a-zA-Z_]+?)\\."); 	
@@ -171,10 +170,11 @@ System.out.println();
 		    	if(sCompareBaseUrl.indexOf('{')>-1 && sCompareBaseUrl.indexOf('}')>-1) 
 		    	{
     				String[] sBaseUrlPaths = CRUDServiceUtil.getUrlSegments(sCompareBaseUrl);
+    				int iBaseUrlLen = sBaseUrlPaths.length;
     				
-    				if(sPaths.length>=sBaseUrlPaths.length)
+    				if(sPaths.length == iBaseUrlLen)
     				{
-			    		for(int i=0; i<sBaseUrlPaths.length; i++)
+			    		for(int i=0; i<iBaseUrlLen; i++)
 			    		{
 			    			String sUrlSegment = sBaseUrlPaths[i];
 			    			if(sUrlSegment.startsWith("{") && sUrlSegment.endsWith("}")) 
@@ -477,5 +477,11 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
     	return plugin;
     }
     
+    public void registerBaseUrl(String aMappedBaseUrl, String aCrudKey)
+    {
+    	if(CRUDService.mapUrlCrudkey==null)
+    		CRUDService.mapUrlCrudkey = new HashMap<String, String>();
+    	CRUDService.mapUrlCrudkey.put(aMappedBaseUrl, aCrudKey);
+    }
     
 }
