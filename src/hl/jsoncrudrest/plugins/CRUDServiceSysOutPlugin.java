@@ -18,6 +18,7 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 		System.out.println("filters="+aCrudReq.getCrudFilters().toString());
 		System.out.println("sorting="+String.join(", ", aCrudReq.getCrudSorting()));
 		System.out.println("returns="+String.join(", ", aCrudReq.getCrudReturns()));
+		System.out.println("urlPathParam="+aCrudReq.getUrlPathParam());
 		System.out.println("echoJsonAttrs="+aCrudReq.getEchoJsonAttrs());
 		System.out.println("pagination=start:"+aCrudReq.getPaginationStartFrom());
 		System.out.println("pagination=fetchsize:"+aCrudReq.getPaginationFetchSize());

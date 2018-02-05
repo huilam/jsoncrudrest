@@ -91,7 +91,17 @@ public class CRUDServiceReq extends RESTServiceReq {
 	{
 		if(jsonFilters==null)
 			jsonFilters = new JSONObject();
-		return jsonFilters.put(aKey, aValue);
+		return jsonFilters.put(aKey, aValue.toString());
+	}
+	
+	
+	public boolean removeCrudFilter(String aKey)
+	{
+		if(jsonFilters!=null)
+		{
+			return (jsonFilters.remove(aKey)!=null);
+		}
+		return false;
 	}
 	
 	public List<String> getCrudReturns()
@@ -109,6 +119,15 @@ public class CRUDServiceReq extends RESTServiceReq {
 		return listReturns;
 	}	
 	
+	public boolean removeCrudReturns(String aSortingStr)
+	{
+		if(listReturns!=null)
+		{
+			return listReturns.remove(aSortingStr);
+		}
+		return false;
+	}	
+	
 	public List<String> getCrudSorting()
 	{
 		if(listSorting==null)
@@ -122,6 +141,15 @@ public class CRUDServiceReq extends RESTServiceReq {
 			return new ArrayList<String>();
 		listSorting.add(aSortingStr);
 		return listSorting;
+	}	
+	
+	public boolean removeCrudSorting(String aSortingStr)
+	{
+		if(listSorting!=null)
+		{
+			return listSorting.remove(aSortingStr);
+		}
+		return false;
 	}	
 	
 	public long getPaginationStartFrom()

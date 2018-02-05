@@ -1,5 +1,7 @@
 package hl.jsoncrudrest.restapi;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,11 +47,12 @@ public class CRUDServiceUtil {
 					for(String sQParamVal : sQParamVals)
 					{
 						String[] sKVals = sQParamVal.split(QPARAM_MULTIKEY_KEYVALUE_SEPARATOR);
+						sKVals[0] = urlDecode(sKVals[0]);
 						if(sKVals.length==1)
 						{
 							sKVals = new String[] {sKVals[0], ""};
 						}
-						mapParamVals.put(sKVals[0], sKVals[1]);
+						mapParamVals.put(sKVals[0], urlDecode(sKVals[1]));
 					}
 				}
 				mapQueryParams.put(sQParam[0], mapParamVals);
@@ -160,6 +163,17 @@ public class CRUDServiceUtil {
     	    	
     	return jsonKV;
     }    
+    
+
+	private static String urlDecode(String aUrl)
+	{
+		try {
+			return URLDecoder.decode(aUrl, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			return aUrl;
+		}
+	}
+	
     
 	
 	///

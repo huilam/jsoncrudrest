@@ -17,7 +17,6 @@ import org.json.JSONObject;
 import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudRestUtil;
-import hl.restapi.service.RESTServiceReq;
 import hl.common.http.HttpResp;
 import hl.common.http.RestApiUtil;
 
@@ -31,6 +30,8 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_ID_ATTRNAME	= "restapi.id";
 	protected static String _RESTAPI_FETCH_LIMIT	= "restapi.fetch.limit";
 	protected static String _RESTAPI_RESULT_ONLY	= "restapi.result.only";	
+	protected static String _RESTAPI_MAPPED_URL		= "restapi.baseurl";	
+	protected static String _RESTAPI_PLUGIN_CLASSNAME = "restapi.plugin.implementation";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
 	protected static String _PAGINATION_FETCHSIZE 	= JsonCrudConfig._LIST_FETCHSIZE;
@@ -57,7 +58,7 @@ public class CRUDService extends HttpServlet {
         Map<String, String> mapConfigs = JsonCrudRestUtil.getCRUDMgr().getAllConfig();
         for(String sKey : mapConfigs.keySet())
         {
-        	if(sKey.endsWith("."+RESTServiceReq._RESTAPI_BASE_URL))
+        	if(sKey.endsWith(_RESTAPI_MAPPED_URL))
         	{
         		Matcher m = pattCrudKey.matcher(sKey);
 	        	if(m.find())
@@ -461,7 +462,7 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
     private ICRUDServicePlugin getPlugin(Map<String, String> aMapCrudConfig) throws JsonCrudException
     {
 		ICRUDServicePlugin plugin = null;
-		String sPluginClassName = aMapCrudConfig.get(RESTServiceReq._RESTAPI_PLUGIN_IMPL_CLASSNAME);
+		String sPluginClassName = aMapCrudConfig.get(_RESTAPI_PLUGIN_CLASSNAME);
     	if(sPluginClassName!=null && sPluginClassName.trim().length()>0)
     	{
 	    	try {
