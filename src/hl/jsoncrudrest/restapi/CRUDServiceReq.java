@@ -188,6 +188,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 		sb.append("\n").append("CrudFilters:").append(getCrudFilters());
 		sb.append("\n").append("CrudSorting:").append(getCrudSorting());
 		sb.append("\n").append("CrudReturns:").append(getCrudReturns());
+		sb.append("\n").append("urlPathParam:").append(getUrlPathParam());
 		sb.append("\n").append("PaginationStartFrom:").append(getPaginationStartFrom());
 		sb.append("\n").append("PaginationFetchSize:").append(getPaginationFetchSize());
 		//

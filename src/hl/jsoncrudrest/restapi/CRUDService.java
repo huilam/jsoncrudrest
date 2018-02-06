@@ -3,9 +3,6 @@ package hl.jsoncrudrest.restapi;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +14,7 @@ import org.json.JSONObject;
 import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudRestUtil;
+import hl.restapi.service.RESTApiUtil;
 import hl.common.http.HttpResp;
 import hl.common.http.RestApiUtil;
 
@@ -30,7 +28,9 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_ID_ATTRNAME	= "restapi.id";
 	protected static String _RESTAPI_FETCH_LIMIT	= "restapi.fetch.limit";
 	protected static String _RESTAPI_RESULT_ONLY	= "restapi.result.only";	
-	protected static String _RESTAPI_MAPPED_URL		= "restapi.baseurl";	
+	protected static String _RESTAPI_MAPPED_URL		= "restapi.mapped.url";	
+	protected static String _RESTAPI_AUTO_QUERYSTR	= "restapi.auto.query-string";
+	
 	protected static String _RESTAPI_PLUGIN_CLASSNAME = "restapi.plugin.implementation";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
@@ -41,9 +41,9 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
 	private static String _VERSION = "0.2.3";
-	
-	private static Map<String, String> mapUrlCrudkey = null;
-	private static Pattern pattCrudKey = Pattern.compile("crud\\.([a-zA-Z_]+?)\\."); 	
+		
+	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
+	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
 	
 	public static final String GET 		= "GET";
 	public static final String POST 	= "POST";
@@ -53,24 +53,59 @@ public class CRUDService extends HttpServlet {
 	public CRUDService() {
         super();
         
-        mapUrlCrudkey = new HashMap<String, String>();
+        mapAutoUrlCrudkey 	= new HashMap<Integer, Map<String, String>>();
+        mapMappedUrlCrudkey = new HashMap<Integer, Map<String, String>>();
         
-        Map<String, String> mapConfigs = JsonCrudRestUtil.getCRUDMgr().getAllConfig();
-        for(String sKey : mapConfigs.keySet())
+        JsonCrudConfig config = JsonCrudRestUtil.getCRUDMgr().getJsonCrudConfig();
+        for(String sKey : config.getConfigCrudKeys())
         {
-        	if(sKey.endsWith(_RESTAPI_MAPPED_URL))
+    		if(!sKey.toLowerCase().startsWith("crud."))
+    		{
+    			continue;
+    		}
+    		
+    		String sCrudKey = sKey.substring("crud.".length());
+    		
+   			Map<String, String> mapConfig = config.getConfig(sKey);
+        	String sMappedURL = mapConfig.get(_RESTAPI_MAPPED_URL);
+        	if(sMappedURL!=null)
         	{
-        		Matcher m = pattCrudKey.matcher(sKey);
-	        	if(m.find())
-	        	{
-	        		String sCrudKey = m.group(1);
-	        		String sURL = mapConfigs.get(sKey);
-	        		if(sURL!=null && sURL.trim().length()>0)
-	        		{
-	        			mapUrlCrudkey.put(sURL, sCrudKey);
-	        		}
-	        	}
+        		String[] sMappedURLs = RESTApiUtil.getUrlSegments(sMappedURL);
+        		if(sMappedURLs!=null)
+        		{
+        			Map<String, String> mapUrl = mapMappedUrlCrudkey.get(sMappedURLs.length);
+        			if(mapUrl==null)
+        			{
+        				mapUrl = new HashMap<String, String>();
+        			}
+        			mapUrl.put(sMappedURL, sCrudKey);
+        			mapMappedUrlCrudkey.put(sMappedURLs.length, mapUrl);
+        		}
         	}
+        	else //if(sMappedURL==null)
+        	{
+
+    			String sId = mapConfig.get(_RESTAPI_ID_ATTRNAME);
+    			if(sId==null)
+    				sId = "id";
+    			
+        		Map<String, String> mapOne = mapAutoUrlCrudkey.get(1);
+        		if(mapOne==null)
+        		{
+        			mapOne = new HashMap<String, String>();
+        		}
+        		Map<String, String> mapTwo = mapAutoUrlCrudkey.get(2);
+        		if(mapTwo==null)
+        		{
+        			mapTwo = new HashMap<String, String>();
+        		}
+        		mapOne.put("/"+sCrudKey, sCrudKey);
+        		mapTwo.put("/"+sCrudKey+"/{"+sId+"}", sCrudKey);
+        		
+        		mapAutoUrlCrudkey.put(1, mapOne);
+        		mapAutoUrlCrudkey.put(2, mapTwo);
+        	}
+        	
         }
     }
     
@@ -145,7 +180,7 @@ public class CRUDService extends HttpServlet {
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
     	
     	Map<String,String> mapPathParams = new HashMap<String, String>();
-    	int iBaseUrlLengthAdj = 0;
+		boolean isFilterById = false;
  
 /*
 System.out.println("sReqUri:"+sReqUri);
@@ -158,85 +193,92 @@ System.out.println();
     	sPathInfo = appendSuffix(sPathInfo, "/");
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
-		String sCrudKey = sPaths[0];
-		Map<String, String> mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sCrudKey);
-		if(mapCrudConfig==null)
+		
+				
+		String sCrudKey = null;
+		
+		//
+		Map<String, String> mapMappedUrl = mapMappedUrlCrudkey.get(sPaths.length);
+		if(mapMappedUrl!=null)
 		{
-			String sURLmappedCrudkey = null;
-			//check url-crudkey mapping
-			for(String sOrgMapBaseUrl : mapUrlCrudkey.keySet())
+			String sConfigUrl = getMatchingConfigUrl(mapMappedUrl, sPaths);
+			if(sConfigUrl!=null)
 			{
-				String sCompareBaseUrl = appendSuffix(sOrgMapBaseUrl, "/");
-				
-		    	if(sCompareBaseUrl.indexOf('{')>-1 && sCompareBaseUrl.indexOf('}')>-1) 
-		    	{
-    				String[] sBaseUrlPaths = CRUDServiceUtil.getUrlSegments(sCompareBaseUrl);
-    				int iBaseUrlLen = sBaseUrlPaths.length;
-    				
-    				if(sPaths.length == iBaseUrlLen)
-    				{
-			    		for(int i=0; i<iBaseUrlLen; i++)
-			    		{
-			    			String sUrlSegment = sBaseUrlPaths[i];
-			    			if(sUrlSegment.startsWith("{") && sUrlSegment.endsWith("}")) 
-			    			{
-			    				String sPathParamName 	= sUrlSegment.substring(1, sUrlSegment.length()-1);
-			    				String sPathParamValue 	= sPaths[i];
-			    				mapPathParams.put(sPathParamName, sPathParamValue);
-			    				sBaseUrlPaths[i] = sPathParamValue;
-			    			}
-			    		}
-    				}
-    				sCompareBaseUrl = "/"+String.join("/", sBaseUrlPaths)+"/";
-		    	}
-				
-				if(sPathInfo.startsWith(sCompareBaseUrl))
-				{
-					sURLmappedCrudkey = mapUrlCrudkey.get(sOrgMapBaseUrl);
-					iBaseUrlLengthAdj =  CRUDServiceUtil.getUrlSegments(sOrgMapBaseUrl).length-1;
-					break;
-				}
-			}
-			
-			if(sURLmappedCrudkey!=null)
-			{
-				mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sURLmappedCrudkey);
-				if(mapCrudConfig!=null)
-				{
-					sCrudKey = sURLmappedCrudkey;
-				}
+				mapPathParams = getPathParamMap(req, sConfigUrl);
+				sCrudKey = mapMappedUrl.get(sConfigUrl);
 			}
 		}
 		
-		if(mapCrudConfig!=null)
+		if(sCrudKey==null)
 		{
+			Map<String, String> mapAutoUrl = mapAutoUrlCrudkey.get(sPaths.length);
+			if(mapAutoUrl!=null)
+			{
+				String sConfigUrl = getMatchingConfigUrl(mapAutoUrl, sPaths);
+				if(sConfigUrl!=null)
+				{
+					mapPathParams = getPathParamMap(req, sConfigUrl);
+					sCrudKey = mapAutoUrl.get(sConfigUrl);
+					
+					isFilterById = (sPaths.length == 2);
+				}
+			}
 			
-			int iUrlBranch = sPaths.length - iBaseUrlLengthAdj; 
+		}
+		
+		
+		
+		Map<String, String> mapCrudConfig = null;
 
-			/*
-System.out.println("iUrlBranch="+iUrlBranch);
-System.out.println("sPaths.length="+sPaths.length);
-System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
-*/
-			
-			boolean isFilterById = iUrlBranch==2;
-			
+		if(sCrudKey!=null)
+		{
+			mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sCrudKey);
+			if(mapCrudConfig==null)
+			{
+				sCrudKey = null;
+			}
+		}
+				
+		
+		if(mapCrudConfig!=null)
+		{			
 			//
 			CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
 			crudReq.setCrudKey(sCrudKey);
 			crudReq.addUrlPathParam(mapPathParams);
 	
+			String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
+			if(sIdFieldName==null || sIdFieldName.trim().length()==0)
+				sIdFieldName = "id";
+
+			if(!isFilterById)
+			{
+				//for MappedUrl
+				isFilterById = mapPathParams.get(sIdFieldName)!=null;
+			}
+			
 			if(isFilterById)
 			{
-				String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
-				if(sIdFieldName==null || sIdFieldName.trim().length()==0)
-					sIdFieldName = "id";
 				
 				if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
 						|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
 						|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 				{
-					crudReq.addCrudFilter(sIdFieldName, sPaths[sPaths.length-1]);
+					String sIdValue = mapPathParams.get(sIdFieldName);
+					
+					if(sIdValue==null && sPaths.length==2)
+					{
+						sIdValue = sPaths[sPaths.length-1];
+					}
+					
+					if(sIdValue!=null)
+					{
+						crudReq.addCrudFilter(sIdFieldName, sIdValue);
+					}
+					else
+					{
+						isFilterById = false;
+					}
 				}
 			}
 			//
@@ -251,29 +293,27 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
 				{
 					if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
 					{
-						switch (iUrlBranch)
+						if(isFilterById)
 						{
-							case 1 : //get list
-								
-								long lfetchSize = crudReq.getPaginationFetchSize();
-								
-								if(lfetchSize==0 && crudReq.getFetchLimit()>0)
-								{
-									lfetchSize = crudReq.getFetchLimit();
-								}
-		
-								jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
-										crudReq.getCrudFilters(), 
-										crudReq.getPaginationStartFrom(),
-										lfetchSize, 
-										crudReq.getCrudSorting(),
-										crudReq.getCrudReturns()
-										);
-								break;
-								
-							case 2 : //get id
-								jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
-								break;
+							jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
+						}
+						else
+						{
+							long lfetchSize = crudReq.getPaginationFetchSize();
+							
+							if(lfetchSize==0 && crudReq.getFetchLimit()>0)
+							{
+								lfetchSize = crudReq.getFetchLimit();
+							}
+	
+							jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
+									crudReq.getCrudFilters(), 
+									crudReq.getPaginationStartFrom(),
+									lfetchSize, 
+									crudReq.getCrudSorting(),
+									crudReq.getCrudReturns()
+									);
+							
 						}
 						
 						if(jsonResult!=null)
@@ -293,54 +333,45 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
 					}
 					else if(PUT.equalsIgnoreCase(crudReq.getHttpMethod()))
 					{
-						switch (iUrlBranch)
+						if(isFilterById)
 						{
-						 	//by id
-							case 2 :
-								JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
-								JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
+							JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
+							JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
+							
+							if(jsonArrResult!=null)
+							{
+								httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
 								
-								if(jsonArrResult!=null)
+								if(jsonArrResult.length()==1)
 								{
-									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-									
-									if(jsonArrResult.length()==1)
-									{
-										jsonResult = jsonArrResult.getJSONObject(0);
-									}
-									else
-									{
-										jsonResult = toPaginationResult(jsonArrResult);
-									}
+									jsonResult = jsonArrResult.getJSONObject(0);
 								}
-								break;
+								else
+								{
+									jsonResult = toPaginationResult(jsonArrResult);
+								}
+							}
 						}
 					}
 					else if(DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 					{
 						JSONArray jsonArrResult = null;
-		
-						switch (iUrlBranch)
+						if(isFilterById)
 						{
-							case 1 : //delete list
-								//??
-								break;
-							case 2 : //get id
-								jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, crudReq.getCrudFilters());
-								if(jsonArrResult!=null)
+							jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, crudReq.getCrudFilters());
+							if(jsonArrResult!=null)
+							{
+								httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+								
+								if(jsonArrResult.length()==1)
 								{
-									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-									
-									if(jsonArrResult.length()==1)
-									{
-										jsonResult = jsonArrResult.getJSONObject(0);
-									}
-									else
-									{
-										jsonResult = toPaginationResult(jsonArrResult);
-									}
+									jsonResult = jsonArrResult.getJSONObject(0);
 								}
-								break;
+								else
+								{
+									jsonResult = toPaginationResult(jsonArrResult);
+								}
+							}
 						}
 					}
 				}
@@ -478,11 +509,58 @@ System.out.println("iBaseUrlLengthAdj="+iBaseUrlLengthAdj);
     	return plugin;
     }
     
-    public void registerBaseUrl(String aMappedBaseUrl, String aCrudKey)
+    public String getMatchingConfigUrl(Map<String, String> aMapUrl, String[] aPaths)
     {
-    	if(CRUDService.mapUrlCrudkey==null)
-    		CRUDService.mapUrlCrudkey = new HashMap<String, String>();
-    	CRUDService.mapUrlCrudkey.put(aMappedBaseUrl, aCrudKey);
+    	String sMatchedURL = null;
+    	if(aMapUrl!=null)
+    	{
+			for(String sConfigUrl : aMapUrl.keySet())
+			{
+				sMatchedURL = sConfigUrl;
+				String[] configURLs = CRUDServiceUtil.getUrlSegments(sConfigUrl);
+				for(int i=0; i<configURLs.length; i++)
+				{
+					String sUrlSeg = configURLs[i];
+					if(sUrlSeg.startsWith("{") && sUrlSeg.endsWith("}")) 
+					{
+						//wildcard
+					}
+					else if(!sUrlSeg.equals(aPaths[i]))
+					{
+						sMatchedURL = null;
+						break;
+					}
+				}
+				
+				if(sMatchedURL!=null)
+				{
+					break;
+				}
+			}
+    	}
+		return sMatchedURL;
     }
     
+    public Map<String,String> getPathParamMap(HttpServletRequest request, String aConfigURL)
+    {
+    	Map<String,String> mapPathParams = new HashMap<String, String>();
+    	
+    	String[] sPaths = CRUDServiceUtil.getUrlSegments(request.getPathInfo());
+    	String[] configURLs = CRUDServiceUtil.getUrlSegments(aConfigURL);
+    	
+    	for(int i=0; i<configURLs.length; i++)
+		{
+			String sUrlSeg = configURLs[i];
+			if(sUrlSeg.startsWith("{") && sUrlSeg.endsWith("}")) 
+			{
+				String sPathParamName 	= sUrlSeg.substring(1, sUrlSeg.length()-1);
+				String sPathParamValue 	= sPaths[i];
+				mapPathParams.put(sPathParamName, sPathParamValue);
+			}
+		}
+    	
+    	return mapPathParams;
+    }
+    	
+    	
 }
