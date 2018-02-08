@@ -26,10 +26,10 @@ public class CRUDService extends HttpServlet {
 	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
 	
 	protected static String _RESTAPI_ID_ATTRNAME	= "restapi.id";
+	protected static String _RESTAPI_ECHO_PREFIX	= "restapi.echo.jsonattr.prefix";
 	protected static String _RESTAPI_FETCH_LIMIT	= "restapi.fetch.limit";
 	protected static String _RESTAPI_RESULT_ONLY	= "restapi.result.only";	
 	protected static String _RESTAPI_MAPPED_URL		= "restapi.mapped.url";	
-	protected static String _RESTAPI_AUTO_QUERYSTR	= "restapi.auto.query-string";
 	
 	protected static String _RESTAPI_PLUGIN_CLASSNAME = "restapi.plugin.implementation";
 	

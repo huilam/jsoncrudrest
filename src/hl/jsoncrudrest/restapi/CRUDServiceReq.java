@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
 
 import hl.jsoncrud.JsonCrudConfig;
+import hl.restapi.service.RESTApiUtil;
 import hl.restapi.service.RESTServiceReq;
 
 public class CRUDServiceReq extends RESTServiceReq {
@@ -54,6 +55,15 @@ public class CRUDServiceReq extends RESTServiceReq {
 				this.fetchlimit = 0;
 			}
 		}
+		
+		
+		//
+		String sJsonAttrEchoPrefix = getConfigMap().get(CRUDService._RESTAPI_ECHO_PREFIX);
+		if(sJsonAttrEchoPrefix!=null)
+		{
+			this.jsonEchoAttrs = RESTApiUtil.extractEchoAttrs(aReq, this.reqInputContentData, sJsonAttrEchoPrefix);
+		}
+		//
 	}
 	///
 	
