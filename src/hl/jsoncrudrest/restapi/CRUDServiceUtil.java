@@ -122,13 +122,12 @@ public class CRUDServiceUtil {
     		return null;
     	
     	List<String> listSortFields = null;
-    	JSONObject jsonSorting = getKeyValue(mapSorting);
-    	if(jsonSorting!=null)
+    	if(mapSorting!=null)
     	{
     		listSortFields = new ArrayList<String>();
-	    	for(String sKey : jsonSorting.keySet())
+	    	for(String sKey : mapSorting.keySet())
 	    	{
-	    		String sSortDir = jsonSorting.getString(sKey);
+	    		String sSortDir = String.valueOf(mapSorting.get(sKey));
 	    		
 	    		String sSorting = "";
 	    		
