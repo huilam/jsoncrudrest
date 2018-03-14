@@ -3,7 +3,7 @@ package hl.jsoncrudrest.restapi;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public class CRUDServiceUtil {
 
     protected static Map<String, Map<String,String>> getQueryParamsMap(HttpServletRequest req)
     {
-		Map<String, Map<String,String>> mapQueryParams = new HashMap<String, Map<String,String>>();
+		Map<String, Map<String,String>> mapQueryParams = new LinkedHashMap<String, Map<String,String>>();
 		
 		String sQueryString = req.getQueryString();
 		if(sQueryString!=null)
@@ -39,7 +39,7 @@ public class CRUDServiceUtil {
 			for(String sQueryParam : req.getQueryString().split(QPARAM_SEPARATOR))
 			{
 				String[] sQParam = sQueryParam.split(QPARAM_KEYVALUE_SEPARATOR);
-				Map<String, String> mapParamVals = new HashMap<String,String>();
+				Map<String, String> mapParamVals = new LinkedHashMap<String,String>();
 				
 				if(sQParam.length>1)
 				{

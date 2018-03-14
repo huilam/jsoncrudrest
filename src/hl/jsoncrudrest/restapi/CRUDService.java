@@ -40,7 +40,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.2.3";
+	private static String _VERSION = "0.2.5";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -52,7 +52,13 @@ public class CRUDService extends HttpServlet {
 
 	public CRUDService() {
         super();
-        
+        System.out.println("CRUDService() constructor");
+	}
+	
+	public void init()
+	{
+		System.out.println("CRUDService.init()");
+		
         mapAutoUrlCrudkey 	= new HashMap<Integer, Map<String, String>>();
         mapMappedUrlCrudkey = new HashMap<Integer, Map<String, String>>();
         
@@ -194,7 +200,6 @@ System.out.println();
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
 		
-				
 		String sCrudKey = null;
 		
 		//
@@ -223,7 +228,6 @@ System.out.println();
 					isFilterById = (sPaths.length == 2);
 				}
 			}
-			
 		}
 		
 		
