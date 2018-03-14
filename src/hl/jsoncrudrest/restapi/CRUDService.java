@@ -40,10 +40,12 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.2.6";
+	private static String _VERSION = "0.2.7";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
+	
+	private Map<String, String> mapDefaultConfig 					= null;
 	
 	public static final String GET 		= "GET";
 	public static final String POST 	= "POST";
@@ -61,57 +63,64 @@ public class CRUDService extends HttpServlet {
 		
         mapAutoUrlCrudkey 	= new HashMap<Integer, Map<String, String>>();
         mapMappedUrlCrudkey = new HashMap<Integer, Map<String, String>>();
+        mapDefaultConfig 	= new HashMap<String, String>();
         
         JsonCrudConfig config = JsonCrudRestUtil.getCRUDMgr().getJsonCrudConfig();
         for(String sKey : config.getConfigCrudKeys())
         {
-    		if(!sKey.toLowerCase().startsWith("crud."))
+        	if(sKey.equalsIgnoreCase("framework.default"))
+        	{
+        		Map<String, String> mapConfig = config.getConfig(sKey);
+        		for(String sDefKey : mapConfig.keySet())
+        		{
+        			String sDefVal = mapConfig.get(sDefKey);
+        			mapDefaultConfig.put(sDefKey, sDefVal);
+        		}
+        	}
+        	else if(sKey.toLowerCase().startsWith("crud."))
     		{
-    			continue;
+	    		String sCrudKey = sKey.substring("crud.".length());
+	    		
+	   			Map<String, String> mapConfig = config.getConfig(sKey);
+	        	String sMappedURL = mapConfig.get(_RESTAPI_MAPPED_URL);
+	        	if(sMappedURL!=null)
+	        	{
+	        		String[] sMappedURLs = RESTApiUtil.getUrlSegments(sMappedURL);
+	        		if(sMappedURLs!=null)
+	        		{
+	        			Map<String, String> mapUrl = mapMappedUrlCrudkey.get(sMappedURLs.length);
+	        			if(mapUrl==null)
+	        			{
+	        				mapUrl = new HashMap<String, String>();
+	        			}
+	        			mapUrl.put(sMappedURL, sCrudKey);
+	        			mapMappedUrlCrudkey.put(sMappedURLs.length, mapUrl);
+	        		}
+	        	}
+	        	else //if(sMappedURL==null)
+	        	{
+	
+	    			String sId = mapConfig.get(_RESTAPI_ID_ATTRNAME);
+	    			if(sId==null)
+	    				sId = "id";
+	    			
+	        		Map<String, String> mapOne = mapAutoUrlCrudkey.get(1);
+	        		if(mapOne==null)
+	        		{
+	        			mapOne = new HashMap<String, String>();
+	        		}
+	        		Map<String, String> mapTwo = mapAutoUrlCrudkey.get(2);
+	        		if(mapTwo==null)
+	        		{
+	        			mapTwo = new HashMap<String, String>();
+	        		}
+	        		mapOne.put("/"+sCrudKey, sCrudKey);
+	        		mapTwo.put("/"+sCrudKey+"/{"+sId+"}", sCrudKey);
+	        		
+	        		mapAutoUrlCrudkey.put(1, mapOne);
+	        		mapAutoUrlCrudkey.put(2, mapTwo);
+	        	}
     		}
-    		
-    		String sCrudKey = sKey.substring("crud.".length());
-    		
-   			Map<String, String> mapConfig = config.getConfig(sKey);
-        	String sMappedURL = mapConfig.get(_RESTAPI_MAPPED_URL);
-        	if(sMappedURL!=null)
-        	{
-        		String[] sMappedURLs = RESTApiUtil.getUrlSegments(sMappedURL);
-        		if(sMappedURLs!=null)
-        		{
-        			Map<String, String> mapUrl = mapMappedUrlCrudkey.get(sMappedURLs.length);
-        			if(mapUrl==null)
-        			{
-        				mapUrl = new HashMap<String, String>();
-        			}
-        			mapUrl.put(sMappedURL, sCrudKey);
-        			mapMappedUrlCrudkey.put(sMappedURLs.length, mapUrl);
-        		}
-        	}
-        	else //if(sMappedURL==null)
-        	{
-
-    			String sId = mapConfig.get(_RESTAPI_ID_ATTRNAME);
-    			if(sId==null)
-    				sId = "id";
-    			
-        		Map<String, String> mapOne = mapAutoUrlCrudkey.get(1);
-        		if(mapOne==null)
-        		{
-        			mapOne = new HashMap<String, String>();
-        		}
-        		Map<String, String> mapTwo = mapAutoUrlCrudkey.get(2);
-        		if(mapTwo==null)
-        		{
-        			mapTwo = new HashMap<String, String>();
-        		}
-        		mapOne.put("/"+sCrudKey, sCrudKey);
-        		mapTwo.put("/"+sCrudKey+"/{"+sId+"}", sCrudKey);
-        		
-        		mapAutoUrlCrudkey.put(1, mapOne);
-        		mapAutoUrlCrudkey.put(2, mapTwo);
-        	}
-        	
         }
     }
     
@@ -498,6 +507,13 @@ System.out.println();
     {
 		ICRUDServicePlugin plugin = null;
 		String sPluginClassName = aMapCrudConfig.get(_RESTAPI_PLUGIN_CLASSNAME);
+		
+		if(sPluginClassName==null || "".equalsIgnoreCase(sPluginClassName))
+		{
+			//try to get default implementation since no custom plugin
+			sPluginClassName = mapDefaultConfig.get(_RESTAPI_PLUGIN_CLASSNAME);
+		}
+		
     	if(sPluginClassName!=null && sPluginClassName.trim().length()>0)
     	{
 	    	try {
