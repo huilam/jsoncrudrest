@@ -100,7 +100,9 @@ public class CRUDServiceReq extends RESTServiceReq {
 	public JSONObject addCrudFilter(String aKey, Object aValue)
 	{
 		if(jsonFilters==null)
+		{
 			jsonFilters = new JSONObject();
+		}
 		return jsonFilters.put(aKey, aValue.toString());
 	}
 	
@@ -124,7 +126,9 @@ public class CRUDServiceReq extends RESTServiceReq {
 	public List<String> addCrudReturns(String aSortingStr)
 	{
 		if(listReturns==null)
-			return new ArrayList<String>();
+		{
+			listReturns = new ArrayList<String>();
+		}
 		listReturns.add(aSortingStr);
 		return listReturns;
 	}	
@@ -148,7 +152,9 @@ public class CRUDServiceReq extends RESTServiceReq {
 	public List<String> addCrudSorting(String aSortingStr)
 	{
 		if(listSorting==null)
-			return new ArrayList<String>();
+		{
+			listSorting = new ArrayList<String>();
+		}
 		listSorting.add(aSortingStr);
 		return listSorting;
 	}	
