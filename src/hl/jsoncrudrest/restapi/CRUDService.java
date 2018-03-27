@@ -40,7 +40,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.2.8";
+	private static String _VERSION = "0.2.9";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -270,35 +270,52 @@ System.out.println();
 				isFilterById = mapPathParams.get(sIdFieldName)!=null;
 			}
 			
-			if(isFilterById)
-			{
-				
-				if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
-						|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
-						|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
-				{
-					String sIdValue = mapPathParams.get(sIdFieldName);
-					
-					if(sIdValue==null && sPaths.length==2)
-					{
-						sIdValue = sPaths[sPaths.length-1];
-					}
-					
-					if(sIdValue!=null)
-					{
-						crudReq.addCrudFilter(sIdFieldName, sIdValue);
-					}
-					else
-					{
-						isFilterById = false;
-					}
-				}
-			}
-			//
-	
 			
+
 			ICRUDServicePlugin plugin = null;
 			try {
+			
+				if(isFilterById)
+				{
+					
+					if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
+							|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
+							|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
+					{
+						String sIdValue = mapPathParams.get(sIdFieldName);
+						
+						if(sIdValue==null && sPaths.length==2)
+						{
+							sIdValue = sPaths[sPaths.length-1];
+						}
+						
+						if(sIdValue!=null)
+						{
+							if(crudReq.isIdFieldNumericOnly())
+							{
+								try
+								{
+									Double.parseDouble(sIdValue);
+								}
+								catch(NumberFormatException ex)
+								{
+									httpReq.setContent_type(TYPE_APP_JSON);
+									httpReq.setContent_data("{}");
+									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+									//
+									crudReq.setSkipJsonCrudDbProcess(true);
+								}
+							}
+							crudReq.addCrudFilter(sIdFieldName, sIdValue);
+						}
+						else
+						{
+							isFilterById = false;
+						}
+					}
+				}
+				//
+			
 				plugin = getPlugin(mapCrudConfig);
 				crudReq = preProcess(plugin, crudReq);
 				

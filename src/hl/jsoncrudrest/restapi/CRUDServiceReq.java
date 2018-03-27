@@ -7,15 +7,20 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
 
+import hl.jsoncrud.CRUDMgr;
+import hl.jsoncrud.DBColMeta;
 import hl.jsoncrud.JsonCrudConfig;
+import hl.jsoncrud.JsonCrudRestUtil;
 import hl.restapi.service.RESTApiUtil;
 import hl.restapi.service.RESTServiceReq;
 
 public class CRUDServiceReq extends RESTServiceReq {
 
 	//
+	protected static String _RESTAPI_ID_ATTRNAME	= "restapi.id";
 	//	
 	private String jsonCrudKey				= null;
+	private DBColMeta colIdField			= null;
 	//
 	private JSONObject jsonFilters 			= null;
 	private List<String> listSorting 		= null;
@@ -66,6 +71,23 @@ public class CRUDServiceReq extends RESTServiceReq {
 		//
 	}
 	///
+	
+	public boolean isIdFieldNumericOnly()
+	{
+		if(colIdField==null)
+		{
+			String sIdFieldName = getConfigMap().get(_RESTAPI_ID_ATTRNAME);
+			if(sIdFieldName==null)
+				sIdFieldName = "Id";
+				
+				CRUDMgr m = JsonCrudRestUtil.getCRUDMgr();
+				
+				if(m!=null)
+					colIdField = m.getDBColMetaByJsonName(getCrudKey(), sIdFieldName);		
+		}
+		
+		return colIdField.isNumeric();
+	}
 	
 	public void setCrudKey(String aCrudkey)
 	{
