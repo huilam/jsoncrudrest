@@ -3,6 +3,8 @@ package hl.jsoncrudrest.restapi;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -428,7 +430,7 @@ System.out.println();
 				}
 				
 				
-				
+				httpReq = forwardToProxy(crudReq, httpReq);
 				httpReq = postProcess(plugin, crudReq, httpReq);
 				
 			} catch (JsonCrudException e) {
@@ -476,6 +478,64 @@ System.out.println();
     	return jsonResult;
     }
 
+    public HttpResp forwardToProxy(
+    		CRUDServiceReq aCrudReq, HttpResp aHttpResp) throws JsonCrudException
+    {
+    	String sHttpMethod = aCrudReq.getHttpMethod().toLowerCase();
+    	String sProxyUrlKey = "restapi.proxy."+sHttpMethod+".url";
+    	String sProxyUrl = aCrudReq.getConfigMap().get(sProxyUrlKey);
+    	if(sProxyUrl!=null && sProxyUrl.trim().length()>0)
+    	{
+    		if(sProxyUrl.startsWith("/"))
+    		{
+    			HttpServletRequest req = aCrudReq.getHttpServletReq();
+    			StringBuffer sbReqUri = new StringBuffer();
+    			sbReqUri.append("http");
+    			if(req.getProtocol().toUpperCase().startsWith("HTTPS"))
+    			{
+    				sbReqUri.append("s");
+    			}
+    			sbReqUri.append("://").append(req.getServerName());
+    			sbReqUri.append(":").append(req.getServerPort()).append(req.getContextPath());
+    			sProxyUrl = sbReqUri.toString() + sProxyUrl;
+    		}
+    		
+    		try {
+    			HttpResp resp = null;
+    			if(sHttpMethod.equalsIgnoreCase("get"))
+    			{
+    				resp = RestApiUtil.httpGet(sProxyUrl);
+    			}
+    			else if(sHttpMethod.equalsIgnoreCase("post"))
+    			{
+    				resp = RestApiUtil.httpPost(sProxyUrl, 
+    						aCrudReq.getInputContentType(), 
+    						aCrudReq.getInputContentData());
+    			}
+    			else if(sHttpMethod.equalsIgnoreCase("delete"))
+    			{
+    				resp = RestApiUtil.httpDelete(sProxyUrl, 
+    						aCrudReq.getInputContentType(), 
+    						aCrudReq.getInputContentData());
+    			}   			
+    			else if(sHttpMethod.equalsIgnoreCase("put"))
+    			{
+    				resp = RestApiUtil.httpPut(sProxyUrl, 
+    						aCrudReq.getInputContentType(), 
+    						aCrudReq.getInputContentData());
+    			}   			
+    		
+    			if(resp!=null)
+    				return resp;				
+				
+			} catch (IOException e) {
+				throw new JsonCrudException("PROXY_ERROR",e);
+			}
+    	}
+    	
+    	
+    	return aHttpResp;
+    }
     
     public CRUDServiceReq preProcess(
     		ICRUDServicePlugin aPlugin, 
