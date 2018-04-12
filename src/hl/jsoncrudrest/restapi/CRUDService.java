@@ -304,7 +304,7 @@ System.out.println();
 								catch(NumberFormatException ex)
 								{
 									crudReq.setSkipJsonCrudDbProcess(true);
-									httpReq = getInvalidInputResp(crudReq, httpReq);
+									httpReq = getNotFoundResp(crudReq, httpReq);
 								}
 							}
 							crudReq.addCrudFilter(sIdFieldName, sIdValue);
@@ -462,11 +462,6 @@ System.out.println();
 		} catch (IOException ex) {
 			throw new ServletException(ex.getClass().getSimpleName(), ex);
 		}
-    }
-    
-    private HttpResp getInvalidInputResp(CRUDServiceReq crudReq, HttpResp httpReq)
-    {
-    	return getConfigResp(crudReq, httpReq, "restapi.invalid-input.");
     }
     
     private HttpResp getNotFoundResp(CRUDServiceReq crudReq, HttpResp httpReq)
