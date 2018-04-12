@@ -507,7 +507,7 @@ System.out.println();
 		if(sHttpStatus!=null)
 		{
 			try {
-				iHttpStatus = Integer.parseInt(sHttpStatus);				
+				iHttpStatus = Integer.parseInt(sHttpStatus.trim());				
 			}
 			catch(NumberFormatException numEx)
 			{
