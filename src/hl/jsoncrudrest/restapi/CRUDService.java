@@ -1,7 +1,9 @@
 package hl.jsoncrudrest.restapi;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.Servlet;
@@ -301,11 +303,8 @@ System.out.println();
 								}
 								catch(NumberFormatException ex)
 								{
-									httpReq.setContent_type(TYPE_APP_JSON);
-									httpReq.setContent_data("{}");
-									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-									//
 									crudReq.setSkipJsonCrudDbProcess(true);
+									httpReq = getInvalidInputResp(crudReq, httpReq);
 								}
 							}
 							crudReq.addCrudFilter(sIdFieldName, sIdValue);
@@ -320,6 +319,7 @@ System.out.println();
 			
 				plugin = getPlugin(mapCrudConfig);
 				crudReq = preProcess(plugin, crudReq);
+				httpReq = forwardToProxy(crudReq, httpReq);
 				
 				if(!crudReq.isSkipJsonCrudDbProcess())
 				{
@@ -409,10 +409,6 @@ System.out.println();
 				}
 				///////////////////////////
 				
-				if(httpReq.getHttp_status() == HttpServletResponse.SC_OK);
-				{
-					httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
-				}
 				if(jsonResult!=null)
 				{
 					boolean isResultOnly = "true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_RESULT_ONLY));
@@ -429,8 +425,18 @@ System.out.println();
 						httpReq.setContent_data(jsonResult.toString());
 				}
 				
+				if(isFilterById && httpReq.getContent_data()==null)
+				{
+					//valid request id but not found
+					httpReq = getNotFoundResp(crudReq, httpReq);
+				}
 				
-				httpReq = forwardToProxy(crudReq, httpReq);
+				if(httpReq.getHttp_status() == HttpServletResponse.SC_OK 
+						&& (httpReq.getContent_type()==null || httpReq.getContent_type().trim().length()==0))
+				{
+					httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
+				}
+
 				httpReq = postProcess(plugin, crudReq, httpReq);
 				
 			} catch (JsonCrudException e) {
@@ -458,6 +464,68 @@ System.out.println();
 		}
     }
     
+    private HttpResp getInvalidInputResp(CRUDServiceReq crudReq, HttpResp httpReq)
+    {
+    	return getConfigResp(crudReq, httpReq, "restapi.invalid-input.");
+    }
+    
+    private HttpResp getNotFoundResp(CRUDServiceReq crudReq, HttpResp httpReq)
+    {
+    	return getConfigResp(crudReq, httpReq, "restapi.notfound.");
+    }
+    
+    private HttpResp getConfigResp(CRUDServiceReq crudReq, HttpResp httpReq, String aConfigPrefix)
+    {
+		int iHttpStatus = 500;
+
+		String sHttpMethod 	= crudReq.getHttpMethod();
+		String sHttpStatus 	= null;
+		String sContentType = null;
+		String sContentData = null;
+		
+		List<Map<String, String>> listConfigMaps = new ArrayList<Map<String, String>>();
+		listConfigMaps.add(crudReq.getConfigMap()); //endpoint specify
+		listConfigMaps.add(mapDefaultConfig); //framework
+		
+		for(Map<String, String> mapCfg : listConfigMaps)
+		{
+			if(sHttpStatus==null)
+			{
+				//restapi 
+				sHttpStatus 	= mapCfg.get(aConfigPrefix+sHttpMethod+".status");
+				sContentType 	= mapCfg.get(aConfigPrefix+sHttpMethod+".content-type");
+				sContentData 	= mapCfg.get(aConfigPrefix+sHttpMethod+".content-data");
+			
+				if(sHttpStatus==null)
+				{
+					sHttpStatus 	= mapCfg.get(aConfigPrefix+"status");
+					sContentType 	= mapCfg.get(aConfigPrefix+"content-type");
+					sContentData 	= mapCfg.get(aConfigPrefix+"content-data");
+				}
+	    	}
+			else
+			{
+				break;
+			}
+		}
+		
+		if(sHttpStatus!=null)
+		{
+			try {
+				iHttpStatus = Integer.parseInt(sHttpStatus);				
+			}
+			catch(NumberFormatException numEx)
+			{
+				iHttpStatus = 500;
+			}
+    	}
+		
+		httpReq.setHttp_status(iHttpStatus);
+		httpReq.setContent_type(sContentType);
+		httpReq.setContent_data(sContentData);
+
+		return httpReq;
+    }
     
     private JSONObject toPaginationResult(JSONArray aJsonArrResult)
     {
@@ -492,41 +560,76 @@ System.out.println();
     	
     	if(sProxyUrl!=null && sProxyUrl.trim().length()>0)
     	{
+    		StringBuffer sbApiUrl = new StringBuffer();
+    		
+    		//Url Forming
     		if(sProxyUrl.startsWith("/"))
     		{
     			HttpServletRequest req = aCrudReq.getHttpServletReq();
-    			StringBuffer sbReqUri = new StringBuffer();
-    			sbReqUri.append("http");
+    			sbApiUrl.append("http");
     			if(req.getProtocol().toUpperCase().startsWith("HTTPS"))
     			{
-    				sbReqUri.append("s");
+    				sbApiUrl.append("s");
     			}
-    			sbReqUri.append("://").append(req.getServerName());
-    			sbReqUri.append(":").append(req.getServerPort()).append(req.getContextPath());
-    			sProxyUrl = sbReqUri.toString() + sProxyUrl;
+    			sbApiUrl.append("://").append(req.getServerName());
+    			sbApiUrl.append(":").append(req.getServerPort()).append(req.getContextPath());
+    			sbApiUrl.append(sProxyUrl);
+    		}
+    		else
+    		{
+    			sbApiUrl.append(sProxyUrl);
+    		}
+    		
+    		//Query String
+    		String sQueryStr = aCrudReq.getHttpServletReq().getQueryString();
+    		if(sQueryStr!=null)
+    		{
+        		if(sbApiUrl.toString().indexOf("?")>-1)
+        		{
+        			sbApiUrl.append("&");
+        		}
+        		else
+        		{
+        			sbApiUrl.append("?");
+        		}
+        		sbApiUrl.append(sQueryStr);
+    		}
+
+			String sProxyApiUrl = sbApiUrl.toString();
+
+    		//Path param
+    		JSONObject jsonPathParam = aCrudReq.getUrlPathParam();
+    		if(jsonPathParam!=null)
+    		{
+    			for(String sParamKey : jsonPathParam.keySet())
+    			{
+    				String sReplaceStr = "\\{"+sParamKey+"\\}";
+    				String sReplaceVal = jsonPathParam.getString(sParamKey);
+    				sProxyApiUrl = sProxyApiUrl.replaceAll(sReplaceStr, sReplaceVal);
+    			}
     		}
     		
     		try {
     			HttpResp resp = null;
     			if(sHttpMethod.equalsIgnoreCase("get"))
     			{
-    				resp = RestApiUtil.httpGet(sProxyUrl);
+    				resp = RestApiUtil.httpGet(sProxyApiUrl);
     			}
     			else if(sHttpMethod.equalsIgnoreCase("post"))
     			{
-    				resp = RestApiUtil.httpPost(sProxyUrl, 
+    				resp = RestApiUtil.httpPost(sProxyApiUrl, 
     						aCrudReq.getInputContentType(), 
     						aCrudReq.getInputContentData());
     			}
     			else if(sHttpMethod.equalsIgnoreCase("delete"))
     			{
-    				resp = RestApiUtil.httpDelete(sProxyUrl, 
+    				resp = RestApiUtil.httpDelete(sProxyApiUrl, 
     						aCrudReq.getInputContentType(), 
     						aCrudReq.getInputContentData());
     			}   			
     			else if(sHttpMethod.equalsIgnoreCase("put"))
     			{
-    				resp = RestApiUtil.httpPut(sProxyUrl, 
+    				resp = RestApiUtil.httpPut(sProxyApiUrl, 
     						aCrudReq.getInputContentType(), 
     						aCrudReq.getInputContentData());
     			}   			

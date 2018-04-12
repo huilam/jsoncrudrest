@@ -80,13 +80,16 @@ public class CRUDServiceReq extends RESTServiceReq {
 			if(sIdFieldName==null)
 				sIdFieldName = "Id";
 				
-				CRUDMgr m = JsonCrudRestUtil.getCRUDMgr();
-				
-				if(m!=null)
-					colIdField = m.getDBColMetaByJsonName(getCrudKey(), sIdFieldName);		
+			CRUDMgr m = JsonCrudRestUtil.getCRUDMgr();
+			String sCrudKey = getCrudKey();
+			if(m!=null && sCrudKey!=null)
+				colIdField = m.getDBColMetaByJsonName(sCrudKey, sIdFieldName);		
 		}
 		
-		return colIdField.isNumeric();
+		if(colIdField!=null)
+			return colIdField.isNumeric();
+		else
+			return false;
 	}
 	
 	public void setCrudKey(String aCrudkey)
