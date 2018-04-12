@@ -473,13 +473,13 @@ System.out.println();
     {
 		int iHttpStatus = 500;
 
-		String sHttpMethod 	= crudReq.getHttpMethod();
+		String sHttpMethod 	= crudReq.getHttpMethod().toLowerCase();
 		String sHttpStatus 	= null;
 		String sContentType = null;
 		String sContentData = null;
 		
 		List<Map<String, String>> listConfigMaps = new ArrayList<Map<String, String>>();
-		listConfigMaps.add(crudReq.getConfigMap()); //endpoint specify
+		listConfigMaps.add(crudReq.getConfigMap()); //endpoint specified
 		listConfigMaps.add(mapDefaultConfig); //framework
 		
 		for(Map<String, String> mapCfg : listConfigMaps)
