@@ -484,6 +484,12 @@ System.out.println();
     	String sHttpMethod = aCrudReq.getHttpMethod().toLowerCase();
     	String sProxyUrlKey = "restapi.proxy."+sHttpMethod+".url";
     	String sProxyUrl = aCrudReq.getConfigMap().get(sProxyUrlKey);
+    	
+    	if(sProxyUrl==null || sProxyUrl.trim().length()==0)
+    	{
+    		sProxyUrl = aCrudReq.getConfigMap().get("restapi.proxy.url");
+    	}
+    	
     	if(sProxyUrl!=null && sProxyUrl.trim().length()>0)
     	{
     		if(sProxyUrl.startsWith("/"))
