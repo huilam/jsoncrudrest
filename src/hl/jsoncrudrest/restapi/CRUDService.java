@@ -134,7 +134,7 @@ public class CRUDService extends HttpServlet {
     	String sHttpMethod = request.getMethod();
     	String sPath = request.getPathInfo();
     	
-    	boolean isAbout = sHttpMethod.equals(GET) && sPath.equals("/about");
+    	boolean isAbout = GET.equals(sHttpMethod) && "/about".equals(sPath);
     	if(isAbout)
     	{
 			try {
