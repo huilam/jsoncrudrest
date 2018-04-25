@@ -5,8 +5,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -51,6 +52,8 @@ public class CRUDService extends HttpServlet {
 	
 	private Map<String, String> mapDefaultConfig 					= null;
 	
+	private Logger logger = Logger.getLogger(CRUDService.class.getName());
+	
 	public static final String GET 		= "GET";
 	public static final String POST 	= "POST";
 	public static final String DELETE	= "DELETE";
@@ -58,12 +61,12 @@ public class CRUDService extends HttpServlet {
 
 	public CRUDService() {
         super();
-        System.out.println("CRUDService() constructor");
+        logger.log(Level.INFO, "CRUDService() constructor");
 	}
 	
 	public void init()
 	{
-		System.out.println("CRUDService.init()");
+        logger.log(Level.INFO, "CRUDService.init()");
 		
         mapAutoUrlCrudkey 	= new HashMap<Integer, Map<String, String>>();
         mapMappedUrlCrudkey = new HashMap<Integer, Map<String, String>>();
@@ -190,25 +193,24 @@ public class CRUDService extends HttpServlet {
 
     private void processHttpMethods(HttpServletRequest req, HttpServletResponse res) throws ServletException
     {
-    	String sPathInfo 			= req.getPathInfo();  //{crudkey}/xx/xx
+    	String sPathInfo 		= req.getPathInfo();  //{crudkey}/xx/xx
     	
-    	JSONObject jsonResult 		= null;
-    	JSONObject jsonErrors 		= new JSONObject();
+    	JSONObject jsonResult 	= null;
+    	JSONObject jsonErrors 	= new JSONObject();
+    	
+    	boolean isDebug 		= false;
+		JSONObject jsonDebug 	= new JSONObject();
+    	JSONObject jsonProfiling= new JSONObject();
+
+    	if(sPathInfo==null)
+    		sPathInfo = "";
     	
     	HttpResp httpReq = new HttpResp();
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
     	
     	Map<String,String> mapPathParams = new HashMap<String, String>();
 		boolean isFilterById = false;
- 
-/*
-System.out.println("sReqUri:"+sReqUri);
-System.out.println("sPathInfo:"+sPathInfo);
-System.out.println("sHttpMethod:"+sHttpMethod);
-System.out.println("sInputContentType:"+sInputContentType);
-System.out.println("sInputData:"+sInputData);
-System.out.println();
-*/
+
     	sPathInfo = appendSuffix(sPathInfo, "/");
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
@@ -244,7 +246,6 @@ System.out.println();
 		}
 		
 		
-		
 		Map<String, String> mapCrudConfig = null;
 
 		if(sCrudKey!=null)
@@ -263,6 +264,8 @@ System.out.println();
 			CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
 			crudReq.setCrudKey(sCrudKey);
 			crudReq.addUrlPathParam(mapPathParams);
+			
+			isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
 	
 			String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
 			if(sIdFieldName==null || sIdFieldName.trim().length()==0)
@@ -274,8 +277,6 @@ System.out.println();
 				isFilterById = mapPathParams.get(sIdFieldName)!=null;
 			}
 			
-			
-
 			ICRUDServicePlugin plugin = null;
 			try {
 			
@@ -318,7 +319,11 @@ System.out.println();
 				//
 			
 				plugin = getPlugin(mapCrudConfig);
+				
+				long lStart = System.currentTimeMillis();
 				crudReq = preProcess(plugin, crudReq);
+				jsonProfiling.put("preProcess",System.currentTimeMillis()-lStart);
+				
 				httpReq = forwardToProxy(crudReq, httpReq);
 				
 				if(!crudReq.isSkipJsonCrudDbProcess())
@@ -436,8 +441,22 @@ System.out.println();
 				{
 					httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
 				}
-
+				
+				lStart = System.currentTimeMillis();
 				httpReq = postProcess(plugin, crudReq, httpReq);
+				
+				jsonProfiling.put("postProcess",System.currentTimeMillis()-lStart);
+				
+				if(isDebug)
+				{
+					String sContentData = httpReq.getContent_data();
+					JSONObject jsonTemp = new JSONObject(sContentData);
+
+					jsonDebug.put("profiling",jsonProfiling);
+					
+					jsonTemp.put("debug", jsonDebug);
+					httpReq.setContent_data(jsonTemp.toString());
+				}
 				
 			} catch (JsonCrudException e) {
 	
