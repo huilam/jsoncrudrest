@@ -128,7 +128,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 		{
 			jsonFilters = new JSONObject();
 		}
-		return jsonFilters.put(aKey, aValue.toString());
+		return jsonFilters.put(aKey, aValue);
 	}
 	
 	
