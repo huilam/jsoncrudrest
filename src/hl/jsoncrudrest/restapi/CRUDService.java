@@ -35,6 +35,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_FETCH_LIMIT	= "restapi.fetch.limit";
 	protected static String _RESTAPI_RESULT_ONLY	= "restapi.result.only";	
 	protected static String _RESTAPI_MAPPED_URL		= "restapi.mapped.url";	
+	protected static String _RESTAPI_GZIP_THRESHOLD = "restapi.gzip.threshold.bytes";	
 	
 	protected static String _RESTAPI_PLUGIN_CLASSNAME = "restapi.plugin.implementation";
 	
@@ -58,7 +59,7 @@ public class CRUDService extends HttpServlet {
 	public static final String POST 	= "POST";
 	public static final String DELETE	= "DELETE";
 	public static final String PUT 		= "PUT";
-
+	
 	public CRUDService() {
         super();
         logger.log(Level.INFO, "CRUDService() constructor");
@@ -202,6 +203,8 @@ public class CRUDService extends HttpServlet {
 		JSONObject jsonDebug 	= new JSONObject();
     	JSONObject jsonProfiling= new JSONObject();
 
+    	long lGzipThresholdBytes= -1;
+    	
     	if(sPathInfo==null)
     		sPathInfo = "";
     	
@@ -330,6 +333,8 @@ public class CRUDService extends HttpServlet {
 				{
 					if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
 					{
+						lGzipThresholdBytes = (long) JsonCrudRestUtil.getCrudConfigNumbericVal(sCrudKey, _RESTAPI_GZIP_THRESHOLD, -1);
+						
 						if(isFilterById)
 						{
 							jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
@@ -477,7 +482,9 @@ public class CRUDService extends HttpServlet {
 		}
 		
 		try {
-			RestApiUtil.processHttpResp(res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data());
+			RestApiUtil.processHttpResp(
+					res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data(),
+					lGzipThresholdBytes);
 		} catch (IOException ex) {
 			throw new ServletException(ex.getClass().getSimpleName(), ex);
 		}
