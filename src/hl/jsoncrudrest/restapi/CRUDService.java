@@ -591,18 +591,10 @@ public class CRUDService extends HttpServlet {
     			HttpServletRequest req 	= aCrudReq.getHttpServletReq();
     			String sProtocol 		= req.getScheme();
     			String sContextRoot 	= req.getContextPath()+"/";
-    			
-    			//Different Context Root
-	    		if(sProxyUrl.trim().startsWith("/"))
-	    		{
-	    			sContextRoot = "";
-	    		}
-    			
     			sbApiUrl.append(sProtocol);
     			sbApiUrl.append("://").append(req.getServerName());
     			sbApiUrl.append(":").append(req.getServerPort()).append(sContextRoot);
     			sbApiUrl.append(sProxyUrl);
-    		
     		}
     		else
     		{
