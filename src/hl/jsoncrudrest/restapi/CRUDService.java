@@ -30,6 +30,8 @@ public class CRUDService extends HttpServlet {
 	protected final static String TYPE_APP_JSON 	= "application/json"; 
 	protected final static String TYPE_PLAINTEXT 	= "text/plain"; 
 	
+	private static final String _ERROR_PROXY		= "PROXY_ERROR";
+	
 	protected static String _RESTAPI_ID_ATTRNAME	= "restapi.id";
 	protected static String _RESTAPI_ECHO_PREFIX	= "restapi.echo.jsonattr.prefix";
 	protected static String _RESTAPI_FETCH_LIMIT	= "restapi.fetch.limit";
@@ -46,7 +48,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.3.0";
+	private static String _VERSION = "0.3.1";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -583,21 +585,28 @@ public class CRUDService extends HttpServlet {
     	{
     		StringBuffer sbApiUrl = new StringBuffer();
     		
-    		//Url Forming
-    		if(sProxyUrl.startsWith("/"))
+    		if(sProxyUrl.indexOf("://")==-1) //-- http://  https://   ws://   wss://
     		{
-    			HttpServletRequest req = aCrudReq.getHttpServletReq();
-    			sbApiUrl.append("http");
-    			if(req.getProtocol().toUpperCase().startsWith("HTTPS"))
-    			{
-    				sbApiUrl.append("s");
-    			}
+	    		//Url Forming  
+    			HttpServletRequest req 	= aCrudReq.getHttpServletReq();
+    			String sProtocol 		= req.getScheme();
+    			String sContextRoot 	= req.getContextPath()+"/";
+    			
+    			//Different Context Root
+	    		if(sProxyUrl.trim().startsWith("/"))
+	    		{
+	    			sContextRoot = "";
+	    		}
+    			
+    			sbApiUrl.append(sProtocol);
     			sbApiUrl.append("://").append(req.getServerName());
-    			sbApiUrl.append(":").append(req.getServerPort()).append(req.getContextPath());
+    			sbApiUrl.append(":").append(req.getServerPort()).append(sContextRoot);
     			sbApiUrl.append(sProxyUrl);
+    		
     		}
     		else
     		{
+    			//full url proxy
     			sbApiUrl.append(sProxyUrl);
     		}
     		
@@ -630,6 +639,9 @@ public class CRUDService extends HttpServlet {
     			}
     		}
     		
+    		//debug
+    		logger.log(Level.FINEST, "[debug] proxyurl:"+sProxyApiUrl+"  configkey:"+sProxyUrlKey);
+    		
     		try {
     			HttpResp resp = null;
     			if(sHttpMethod.equalsIgnoreCase("get"))
@@ -659,7 +671,7 @@ public class CRUDService extends HttpServlet {
     				return resp;				
 				
 			} catch (IOException e) {
-				throw new JsonCrudException("PROXY_ERROR",e);
+				throw new JsonCrudException(_ERROR_PROXY, "proxyurl:"+sProxyApiUrl+"  configkey:"+sProxyUrlKey, e);
 			}
     	}
     	
