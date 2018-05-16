@@ -48,7 +48,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.3.1";
+	private static String _VERSION = "0.3.3";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -329,9 +329,13 @@ public class CRUDService extends HttpServlet {
 				crudReq = preProcess(plugin, crudReq);
 				jsonProfiling.put("preProcess",System.currentTimeMillis()-lStart);
 				
-				httpReq = forwardToProxy(crudReq, httpReq);
+				HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
+				if(proxyHttpReq!=null)
+				{
+					httpReq = proxyHttpReq;
+				}
 				
-				if(!crudReq.isSkipJsonCrudDbProcess())
+				if(!crudReq.isSkipJsonCrudDbProcess() && proxyHttpReq==null)
 				{
 					if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
 					{
@@ -660,15 +664,16 @@ public class CRUDService extends HttpServlet {
     			}   			
     		
     			if(resp!=null)
+    			{
     				return resp;				
-				
+    			}
 			} catch (IOException e) {
 				throw new JsonCrudException(_ERROR_PROXY, "proxyurl:"+sProxyApiUrl+"  configkey:"+sProxyUrlKey, e);
 			}
     	}
     	
     	
-    	return aHttpResp;
+    	return null;
     }
     
     public CRUDServiceReq preProcess(
