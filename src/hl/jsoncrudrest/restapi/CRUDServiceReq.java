@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import hl.jsoncrud.CRUDMgr;
 import hl.jsoncrud.DBColMeta;
 import hl.jsoncrud.JsonCrudConfig;
+import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudRestUtil;
 import hl.restapi.service.RESTApiUtil;
 import hl.restapi.service.RESTServiceReq;
@@ -32,13 +33,13 @@ public class CRUDServiceReq extends RESTServiceReq {
 	private boolean isSkipJsonCrudDbProcess	= false;
 	//
 	
-	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap)
+	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap) throws JsonCrudException
 	{
 		super(aReq, aCrudConfigMap);
 		init(aReq, aCrudConfigMap);
 	}
 	
-	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig)
+	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig) throws JsonCrudException
 	{
 		addToConfigMap(aMapCrudConfig);
 		Map<String, Map<String, String>> mapQueryParams = CRUDServiceUtil.getQueryParamsMap(aReq);

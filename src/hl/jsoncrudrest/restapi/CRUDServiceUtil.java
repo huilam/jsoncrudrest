@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
 
 import hl.jsoncrud.JsonCrudConfig;
+import hl.jsoncrud.JsonCrudException;
 
 public class CRUDServiceUtil {
 
@@ -61,7 +62,7 @@ public class CRUDServiceUtil {
 		return mapQueryParams;
     }
 
-    public static long[] getPaginationStartNFetchSize(Map<String, Map<String, String>> mapQueryParams)
+    public static long[] getPaginationStartNFetchSize(Map<String, Map<String, String>> mapQueryParams) throws JsonCrudException
     {
     	if(mapQueryParams==null)
     		return new long[] {0,0};
@@ -76,13 +77,27 @@ public class CRUDServiceUtil {
 			String sFetchStartFrom 	= mapPagination.get(JsonCrudConfig._LIST_START);
 			if(sFetchStartFrom!=null && sFetchStartFrom.trim().length()>0)
 			{
-				iFetchStartFrom = Long.parseLong(sFetchStartFrom);
+				try {
+					iFetchStartFrom = Long.parseLong(sFetchStartFrom);
+				}
+				catch(NumberFormatException ex)
+				{
+					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
+							"Invalid '"+JsonCrudConfig._LIST_START+"' value - "+sFetchStartFrom);
+				}
 			}
 			//
 			String sFetchSize 		= mapPagination.get(JsonCrudConfig._LIST_FETCHSIZE);
 			if(sFetchSize!=null && sFetchSize.trim().length()>0)
 			{
-				iFetchSize = Long.parseLong(sFetchSize);
+				try {
+					iFetchSize = Long.parseLong(sFetchSize);
+				}
+				catch(NumberFormatException ex)
+				{
+					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
+							"Invalid '"+JsonCrudConfig._LIST_FETCHSIZE+"' value - "+sFetchSize);
+				}
 			}
 		}
 		

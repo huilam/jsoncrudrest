@@ -251,8 +251,9 @@ public class CRUDService extends HttpServlet {
 		}
 		
 		
-		Map<String, String> mapCrudConfig = null;
-
+		Map<String, String> mapCrudConfig 	= null;
+		CRUDServiceReq crudReq 				= null;
+		
 		if(sCrudKey!=null)
 		{
 			mapCrudConfig = JsonCrudRestUtil.getCRUDMgr().getCrudConfigs(sCrudKey);
@@ -261,30 +262,28 @@ public class CRUDService extends HttpServlet {
 				sCrudKey = null;
 			}
 		}
-				
-		
+
 		if(mapCrudConfig!=null)
 		{			
-			//
-			CRUDServiceReq crudReq = new CRUDServiceReq(req, mapCrudConfig);
-			crudReq.setCrudKey(sCrudKey);
-			crudReq.addUrlPathParam(mapPathParams);
-			
-			isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
-	
-			String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
-			if(sIdFieldName==null || sIdFieldName.trim().length()==0)
-				sIdFieldName = "id";
-
-			if(!isFilterById)
-			{
-				//for MappedUrl
-				isFilterById = mapPathParams.get(sIdFieldName)!=null;
-			}
-			
 			ICRUDServicePlugin plugin = null;
 			try {
-			
+				//
+				crudReq = new CRUDServiceReq(req, mapCrudConfig);
+				crudReq.setCrudKey(sCrudKey);
+				crudReq.addUrlPathParam(mapPathParams);
+				
+				isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
+		
+				String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
+				if(sIdFieldName==null || sIdFieldName.trim().length()==0)
+					sIdFieldName = "id";
+	
+				if(!isFilterById)
+				{
+					//for MappedUrl
+					isFilterById = mapPathParams.get(sIdFieldName)!=null;
+				}
+				
 				if(isFilterById)
 				{
 					
