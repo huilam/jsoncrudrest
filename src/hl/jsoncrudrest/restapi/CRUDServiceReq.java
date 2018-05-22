@@ -39,6 +39,13 @@ public class CRUDServiceReq extends RESTServiceReq {
 		init(aReq, aCrudConfigMap);
 	}
 	
+	private String[] parseMultiStringConfig(String aConfigValue, String aSeparator)
+	{
+		if(aConfigValue==null || aConfigValue.trim().length()==0)
+			return null;
+		return aConfigValue.trim().split(aSeparator);
+	}
+	
 	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig) throws JsonCrudException
 	{
 		addToConfigMap(aMapCrudConfig);
@@ -51,7 +58,71 @@ public class CRUDServiceReq extends RESTServiceReq {
 		this.pagination_startfrom = lStartNFetchSize[0];
 		this.pagination_fetchsize = lStartNFetchSize[1];
 		
-		String sFetchLimit = getConfigMap().get(CRUDService._RESTAPI_FETCH_LIMIT);
+		Map<String, String> mapConfig = getConfigMap();
+		//////////
+		if(jsonFilters==null)
+		{
+			String sDefFilters = mapConfig.get(CRUDService._RESTAPI_DEF_FILTERS);
+			Map<String, String> mapFilters = CRUDServiceUtil.parseMultiKV(sDefFilters);
+			if(mapFilters!=null && mapFilters.size()>0)
+			{
+				jsonFilters = new JSONObject();
+				for(String sKey : mapFilters.keySet())
+				{
+					jsonFilters.put(sKey, mapFilters.get(sKey));
+				}
+			}
+		}
+		//////////
+		if(listSorting==null)
+		{
+			String sDefSorting = mapConfig.get(CRUDService._RESTAPI_DEF_SORTING);
+			String configs[] = parseMultiStringConfig(sDefSorting, ",");
+			if(configs!=null && configs.length>0)
+			{
+				listSorting = new ArrayList<String>();
+				for(String c: configs)
+				{
+					listSorting.add(c);
+				}
+			}
+		}
+		//////////
+		if(listReturns==null)
+		{
+			String sDefReturns = mapConfig.get(CRUDService._RESTAPI_DEF_RETURNS);
+			String configs[] = parseMultiStringConfig(sDefReturns, ",");
+			if(configs!=null && configs.length>0)
+			{
+				listReturns = new ArrayList<String>();
+				for(String c: configs)
+				{
+					listReturns.add(c);
+				}
+			}
+		}
+		//////////		
+		
+		if(pagination_startfrom==0)
+		{
+			String sFetchStart = mapConfig.get(CRUDService._RESTAPI_DEF_PAGINATION_START);
+			
+			if(sFetchStart!=null)
+			{
+				try {
+					this.pagination_startfrom = Long.parseLong(sFetchStart);
+				} catch(NumberFormatException ex)
+				{
+					this.pagination_startfrom = 0;
+				}
+			}
+		}
+		//////////
+		String sFetchLimit = mapConfig.get(CRUDService._RESTAPI_DEF_PAGINATION_FETCHSIZE);
+		
+		if(sFetchLimit==null)
+			sFetchLimit = mapConfig.get(CRUDService._RESTAPI_FETCH_LIMIT);
+		
 		if(sFetchLimit!=null)
 		{
 			try {
@@ -62,9 +133,8 @@ public class CRUDServiceReq extends RESTServiceReq {
 			}
 		}
 		
-		
-		//
-		String sJsonAttrEchoPrefix = getConfigMap().get(CRUDService._RESTAPI_ECHO_PREFIX);
+		//////////
+		String sJsonAttrEchoPrefix = mapConfig.get(CRUDService._RESTAPI_ECHO_PREFIX);
 		if(sJsonAttrEchoPrefix!=null)
 		{
 			this.jsonEchoAttrs = RESTApiUtil.extractEchoAttrs(aReq, this.reqInputContentData, sJsonAttrEchoPrefix);

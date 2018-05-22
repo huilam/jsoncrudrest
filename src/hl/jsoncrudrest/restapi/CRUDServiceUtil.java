@@ -32,34 +32,41 @@ public class CRUDServiceUtil {
 
     protected static Map<String, Map<String,String>> getQueryParamsMap(HttpServletRequest req)
     {
-		Map<String, Map<String,String>> mapQueryParams = new LinkedHashMap<String, Map<String,String>>();
-		
-		String sQueryString = req.getQueryString();
-		if(sQueryString!=null)
-		{
-			for(String sQueryParam : req.getQueryString().split(QPARAM_SEPARATOR))
+    	Map<String, Map<String,String>> mapQueryParams = new LinkedHashMap<String, Map<String,String>>();
+    	String sQueryString = req.getQueryString();;
+    	if(sQueryString!=null)
+    	{
+			for(String sQueryParam : sQueryString.split(QPARAM_SEPARATOR))
 			{
 				String[] sQParam = sQueryParam.split(QPARAM_KEYVALUE_SEPARATOR);
-				Map<String, String> mapParamVals = new LinkedHashMap<String,String>();
-				
 				if(sQParam.length>1)
 				{
-					String[] sQParamVals = sQParam[1].split(QPARAM_MULTIKEY_SEPARATOR);
-					for(String sQParamVal : sQParamVals)
-					{
-						String[] sKVals = sQParamVal.split(QPARAM_MULTIKEY_KEYVALUE_SEPARATOR);
-						sKVals[0] = urlDecode(sKVals[0]);
-						if(sKVals.length==1)
-						{
-							sKVals = new String[] {sKVals[0], ""};
-						}
-						mapParamVals.put(sKVals[0], urlDecode(sKVals[1]));
-					}
+					mapQueryParams.put(sQParam[0], parseMultiKV(sQParam[1]));
 				}
-				mapQueryParams.put(sQParam[0], mapParamVals);
+			}
+    	}
+    	return mapQueryParams;
+    }
+    
+    protected static Map<String, String> parseMultiKV(String aMultiKVConfig)
+    {
+		Map<String, String> mapParamVals = new LinkedHashMap<String,String>();
+		
+		if(aMultiKVConfig!=null && aMultiKVConfig.trim().length()>0)
+		{
+			String[] sQParamVals = aMultiKVConfig.split(QPARAM_MULTIKEY_SEPARATOR);
+			for(String sQParamVal : sQParamVals)
+			{
+				String[] sKVals = sQParamVal.split(QPARAM_MULTIKEY_KEYVALUE_SEPARATOR);
+				sKVals[0] = urlDecode(sKVals[0]);
+				if(sKVals.length==1)
+				{
+					sKVals = new String[] {sKVals[0], ""};
+				}
+				mapParamVals.put(sKVals[0], urlDecode(sKVals[1]));
 			}
 		}
-		return mapQueryParams;
+		return mapParamVals;
     }
 
     public static long[] getPaginationStartNFetchSize(Map<String, Map<String, String>> mapQueryParams) throws JsonCrudException

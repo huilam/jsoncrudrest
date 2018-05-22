@@ -39,6 +39,12 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_MAPPED_URL		= "restapi.mapped.url";	
 	protected static String _RESTAPI_GZIP_THRESHOLD = "restapi.gzip.threshold.bytes";	
 	
+	protected static String _RESTAPI_DEF_PAGINATION_START 		= "restapi.default.pagination.start";
+	protected static String _RESTAPI_DEF_PAGINATION_FETCHSIZE 	= "restapi.default.pagination.fetchsize";
+	protected static String _RESTAPI_DEF_FILTERS 				= "restapi.default.filters";
+	protected static String _RESTAPI_DEF_SORTING 				= "restapi.default.sorting";
+	protected static String _RESTAPI_DEF_RETURNS 				= "restapi.default.returns";
+	
 	protected static String _RESTAPI_PLUGIN_CLASSNAME = "restapi.plugin.implementation";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
@@ -48,7 +54,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.3.4 beta";
+	private static String _VERSION = "0.3.5 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
