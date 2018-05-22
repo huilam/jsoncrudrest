@@ -142,6 +142,12 @@ public class CRUDServiceReq extends RESTServiceReq {
 		return false;
 	}
 	
+	public String[] getCrudReturnsArray()
+	{
+		List<String> list = getCrudReturns();
+		return list.toArray(new String[list.size()]);
+	}
+	
 	public List<String> getCrudReturns()
 	{
 		if(listReturns==null)
@@ -167,6 +173,12 @@ public class CRUDServiceReq extends RESTServiceReq {
 		}
 		return false;
 	}	
+	
+	public String[] getCrudSortingArray()
+	{
+		List<String> list = getCrudSorting();
+		return list.toArray(new String[list.size()]);
+	}
 	
 	public List<String> getCrudSorting()
 	{
