@@ -499,6 +499,23 @@ public class CRUDService extends HttpServlet {
 		}
 		
 		try {
+			
+			//Kepo method, in case lulu forgot to set content type
+			String sContentType = httpReq.getContent_type();
+			if(sContentType==null || "".equalsIgnoreCase(sContentType))
+			{
+				String sContentData = httpReq.getContent_data();
+				if(sContentData!=null && sContentData.length()>0)
+				{
+					sContentData = sContentData.trim();
+					if(sContentData.startsWith("{") && sContentData.endsWith("}"))
+					{
+						httpReq.setContent_type(TYPE_APP_JSON);
+					}
+				}
+			}
+			//
+			
 			RestApiUtil.processHttpResp(
 					res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data(),
 					lGzipThresholdBytes);
