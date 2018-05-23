@@ -103,7 +103,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 		}
 		//////////		
 		
-		if(pagination_startfrom==0)
+		if(this.pagination_startfrom==0)
 		{
 			String sFetchStart = mapConfig.get(CRUDService._RESTAPI_DEF_PAGINATION_START);
 			
@@ -117,11 +117,25 @@ public class CRUDServiceReq extends RESTServiceReq {
 				}
 			}
 		}
-		//////////
-		String sFetchLimit = mapConfig.get(CRUDService._RESTAPI_DEF_PAGINATION_FETCHSIZE);
 		
-		if(sFetchLimit==null)
-			sFetchLimit = mapConfig.get(CRUDService._RESTAPI_FETCH_LIMIT);
+		//////////		
+		
+		if(this.pagination_fetchsize==0)
+		{
+			String sFetchSize = mapConfig.get(CRUDService._RESTAPI_DEF_PAGINATION_FETCHSIZE);
+			
+			if(sFetchSize!=null)
+			{
+				try {
+					this.pagination_fetchsize = Long.parseLong(sFetchSize);
+				} catch(NumberFormatException ex)
+				{
+					this.pagination_fetchsize = 0;
+				}
+			}
+		}		
+		//////////
+		String sFetchLimit = mapConfig.get(CRUDService._RESTAPI_FETCH_LIMIT);
 		
 		if(sFetchLimit!=null)
 		{

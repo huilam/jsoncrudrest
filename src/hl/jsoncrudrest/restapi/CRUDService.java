@@ -54,7 +54,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.3.5 beta";
+	private static String _VERSION = "0.3.6 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -205,7 +205,7 @@ public class CRUDService extends HttpServlet {
     	String sPathInfo 		= req.getPathInfo();  //{crudkey}/xx/xx
     	
     	JSONObject jsonResult 	= null;
-    	JSONObject jsonErrors 	= new JSONObject();
+    	JSONArray jArrErrors 	= new JSONArray();
     	
     	boolean isDebug 		= false;
 		JSONObject jsonDebug 	= new JSONObject();
@@ -272,9 +272,10 @@ public class CRUDService extends HttpServlet {
 		if(mapCrudConfig!=null)
 		{			
 			ICRUDServicePlugin plugin = null;
-			try {
 				//
+			try {
 				crudReq = new CRUDServiceReq(req, mapCrudConfig);
+			
 				crudReq.setCrudKey(sCrudKey);
 				crudReq.addUrlPathParam(mapPathParams);
 				
@@ -327,7 +328,6 @@ public class CRUDService extends HttpServlet {
 					}
 				}
 				//
-			
 				plugin = getPlugin(mapCrudConfig);
 				
 				long lStart = System.currentTimeMillis();
@@ -473,23 +473,29 @@ public class CRUDService extends HttpServlet {
 					jsonTemp.put("debug", jsonDebug);
 					httpReq.setContent_data(jsonTemp.toString());
 				}
-				
-			} catch (JsonCrudException e) {
-	
-				JSONArray jArrErrors = new JSONArray();
-				
-				if(jsonErrors.has("errors"))
-					jArrErrors = jsonErrors.getJSONArray("errors");
-				
-				jArrErrors.put(e.getErrorCode()+" : "+e.getErrorMsg());
-				
-				httpReq.setContent_type(TYPE_APP_JSON);
-				httpReq.setContent_data(jArrErrors.toString());
-				httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
-				httpReq.setHttp_status_message(e.getErrorMsg());
-				
+			} 
+			catch (JsonCrudException e) 
+			{
+				//unhandled error
+				jArrErrors.put(e);
 				httpReq = handleException(plugin, crudReq, httpReq, e);
 			}
+			
+			if(jArrErrors.length()>0)
+			{
+				String sContentData = httpReq.getContent_data();
+				if(sContentData==null || sContentData.trim().length()==0)
+					sContentData = "{}";
+				
+				jsonResult = new JSONObject(sContentData);
+				jsonResult.put("errors", jArrErrors);
+				
+				httpReq.setContent_type(TYPE_APP_JSON);
+				httpReq.setContent_data(jsonResult.toString());
+				httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
+				
+			}
+			
 		}
 		
 		try {
