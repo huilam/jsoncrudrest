@@ -11,7 +11,7 @@ public interface ICRUDServicePlugin {
 	
 	public HttpResp postProcess(CRUDServiceReq aCrudReq, HttpResp aHttpResp) throws JsonCrudException;
 	
-	public HttpResp handleException(CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aJsonCrudException);
+	public HttpResp handleException(CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aJsonCrudException) throws JsonCrudException;
 	
 	public Properties getPluginProps(); 
 }

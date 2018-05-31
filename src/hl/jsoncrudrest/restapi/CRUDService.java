@@ -477,17 +477,38 @@ public class CRUDService extends HttpServlet {
 			catch (JsonCrudException e) 
 			{
 				//unhandled error
-				jArrErrors.put(e);
-				httpReq = handleException(plugin, crudReq, httpReq, e);
+				try {
+					httpReq = handleException(plugin, crudReq, httpReq, e);
+				}
+				catch(JsonCrudException e2)
+				{
+					jArrErrors.put(e2);
+				}
 			}
 			
-			if(jArrErrors.length()>0)
+			String sContentData = httpReq.getContent_data();
+			if(sContentData==null)
+				sContentData = "";
+			
+			boolean isError = (jArrErrors.length()>0) || (sContentData.indexOf("\"errors\":")>-1);
+			
+			if(isError)
 			{
-				String sContentData = httpReq.getContent_data();
+				sContentData = httpReq.getContent_data();
 				if(sContentData==null || sContentData.trim().length()==0)
 					sContentData = "{}";
 				
 				jsonResult = new JSONObject(sContentData);
+				
+				if(jsonResult.has("errors"))
+				{
+					JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
+					for(int i=0; i<jArrErrsFromPlugin.length(); i++)
+					{
+						jArrErrors.put(jArrErrsFromPlugin.get(i));
+					}
+				}
+				
 				jsonResult.put("errors", jArrErrors);
 				
 				httpReq.setContent_type(TYPE_APP_JSON);
@@ -740,7 +761,7 @@ public class CRUDService extends HttpServlet {
     
     public HttpResp handleException(
     		ICRUDServicePlugin aPlugin, 
-    		CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException)
+    		CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException) throws JsonCrudException
     {
     	if(aPlugin==null)
     		return aHttpResp;
