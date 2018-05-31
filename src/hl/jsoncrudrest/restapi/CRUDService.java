@@ -54,7 +54,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.3.7 beta";
+	private static String _VERSION = "0.3.8 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -482,7 +482,9 @@ public class CRUDService extends HttpServlet {
 				}
 				catch(JsonCrudException e2)
 				{
-					jArrErrors.put(e2);
+					JSONObject jsonEx = new JSONObject();
+					jsonEx.put(e2.getErrorCode(), e2.getErrorMsg());
+					jArrErrors.put(jsonEx);
 				}
 			}
 			
@@ -505,7 +507,7 @@ public class CRUDService extends HttpServlet {
 					JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
 					for(int i=0; i<jArrErrsFromPlugin.length(); i++)
 					{
-						jArrErrors.put(jArrErrsFromPlugin.get(i));
+						jArrErrors.put(jArrErrsFromPlugin.getJSONObject(i));
 					}
 				}
 				
