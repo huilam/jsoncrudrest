@@ -364,7 +364,8 @@ public class CRUDService extends HttpServlet {
 									crudReq.getPaginationStartFrom(),
 									lfetchSize, 
 									crudReq.getCrudSorting(),
-									crudReq.getCrudReturns()
+									crudReq.getCrudReturns(),
+									crudReq.isReturnsExclude()
 									);
 							
 						}

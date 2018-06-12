@@ -26,6 +26,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 	private JSONObject jsonFilters 			= null;
 	private List<String> listSorting 		= null;
 	private List<String> listReturns 		= null;
+	private boolean isReturnsExclude		= false;
 	private long pagination_startfrom		= 0;
 	private long pagination_fetchsize		= 0;
 	
@@ -53,6 +54,15 @@ public class CRUDServiceReq extends RESTServiceReq {
 		jsonFilters = CRUDServiceUtil.getFilters(mapQueryParams);		
 		listSorting = CRUDServiceUtil.getSorting(mapQueryParams);
 		listReturns = CRUDServiceUtil.getReturns(mapQueryParams);
+		isReturnsExclude = false;
+		if(listReturns==null)
+		{
+			listReturns = CRUDServiceUtil.getReturnsExclude(mapQueryParams);
+			if(listReturns!=null)
+			{
+				isReturnsExclude = true;
+			}
+		}
 		
 		long[] lStartNFetchSize = CRUDServiceUtil.getPaginationStartNFetchSize(mapQueryParams);
 		this.pagination_startfrom = lStartNFetchSize[0];
@@ -156,6 +166,12 @@ public class CRUDServiceReq extends RESTServiceReq {
 		//
 	}
 	///
+	
+	public boolean isReturnsExclude()
+	{
+		return isReturnsExclude;
+	}
+	
 	
 	public boolean isIdFieldNumericOnly()
 	{

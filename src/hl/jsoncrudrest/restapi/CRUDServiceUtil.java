@@ -22,7 +22,9 @@ public class CRUDServiceUtil {
 	protected static String _QPARAM_PAGINATION 		= "pagination";
 	protected static String _QPARAM_FILTERS 		= "filters";
 	protected static String _QPARAM_SORTING 		= "sorting";
-	protected static String _QPARAM_RETURNS 		= "returns";	
+	
+	protected static String _QPARAM_RETURNS 		= "returns";
+	protected static String _QPARAM_RETURNS_EXCLUDE	= "returns.exclude";
 	//
 	private static final String QPARAM_SEPARATOR 			= "&";
 	private static final String QPARAM_KEYVALUE_SEPARATOR 	= "=";
@@ -122,10 +124,23 @@ public class CRUDServiceUtil {
     
     public static List<String> getReturns(Map<String, Map<String, String>> mapQueryParams)
     {
-    	Map<String, String> mapReturn = mapQueryParams.get(_QPARAM_RETURNS);
+    	return getReturns(_QPARAM_RETURNS, mapQueryParams);
+    }
+    
+    public static List<String> getReturnsExclude(Map<String, Map<String, String>> mapQueryParams)
+    {
+    	return getReturns(_QPARAM_RETURNS_EXCLUDE, mapQueryParams);
+    }
+    
+    private static List<String> getReturns(String aReturnKey, Map<String, Map<String, String>> mapQueryParams)
+    {
+    	//include take precedence over exclude
+    	Map<String, String> mapReturn = mapQueryParams.get(aReturnKey);
     	
     	if(mapReturn==null)
-    		return null;
+    	{
+        	return null;
+    	}
     	
     	List<String> listReturn = new ArrayList<String>();
     	for(String sAttrName : mapReturn.keySet())
