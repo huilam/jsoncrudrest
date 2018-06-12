@@ -100,7 +100,17 @@ public class CRUDServiceReq extends RESTServiceReq {
 		//////////
 		if(listReturns==null)
 		{
-			String sDefReturns = mapConfig.get(CRUDService._RESTAPI_DEF_RETURNS);
+			isReturnsExclude 	= false;
+			String sDefReturns 	= mapConfig.get(CRUDService._RESTAPI_DEF_RETURNS);
+			if(sDefReturns==null || sDefReturns.trim().length()==0)
+			{
+				sDefReturns = mapConfig.get(CRUDService._RESTAPI_DEF_RETURNS_EXCLUDE);
+				if(sDefReturns!=null && sDefReturns.trim().length()>0)
+				{
+					isReturnsExclude = true;
+				}
+			}
+			
 			String configs[] = parseMultiStringConfig(sDefReturns, ",");
 			if(configs!=null && configs.length>0)
 			{

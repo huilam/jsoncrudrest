@@ -44,6 +44,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_DEF_FILTERS 				= "restapi.default.filters";
 	protected static String _RESTAPI_DEF_SORTING 				= "restapi.default.sorting";
 	protected static String _RESTAPI_DEF_RETURNS 				= "restapi.default.returns";
+	protected static String _RESTAPI_DEF_RETURNS_EXCLUDE		= "restapi.default.returns.exclude";
 	
 	protected static String _RESTAPI_PLUGIN_CLASSNAME = "restapi.plugin.implementation";
 	
