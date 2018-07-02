@@ -768,7 +768,9 @@ public class CRUDService extends HttpServlet {
     		CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException) throws JsonCrudException
     {
     	if(aPlugin==null)
-    		return aHttpResp;
+    	{
+    		throw aException;
+    	}
     	return aPlugin.handleException(aCrudReq, aHttpResp, aException);
     }
     

@@ -127,7 +127,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 		{
 			String sFetchStart = mapConfig.get(CRUDService._RESTAPI_DEF_PAGINATION_START);
 			
-			if(sFetchStart!=null)
+			if(sFetchStart!=null && sFetchStart.trim().length()>0)
 			{
 				try {
 					this.pagination_startfrom = Long.parseLong(sFetchStart);
@@ -144,7 +144,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 		{
 			String sFetchSize = mapConfig.get(CRUDService._RESTAPI_DEF_PAGINATION_FETCHSIZE);
 			
-			if(sFetchSize!=null)
+			if(sFetchSize!=null && sFetchSize.trim().length()>0)
 			{
 				try {
 					this.pagination_fetchsize = Long.parseLong(sFetchSize);
@@ -157,7 +157,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 		//////////
 		String sFetchLimit = mapConfig.get(CRUDService._RESTAPI_FETCH_LIMIT);
 		
-		if(sFetchLimit!=null)
+		if(sFetchLimit!=null && sFetchLimit.trim().length()>0)
 		{
 			try {
 				this.fetchlimit = Long.parseLong(sFetchLimit);

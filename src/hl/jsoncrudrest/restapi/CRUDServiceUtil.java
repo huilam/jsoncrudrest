@@ -92,7 +92,7 @@ public class CRUDServiceUtil {
 				catch(NumberFormatException ex)
 				{
 					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
-							"Invalid '"+JsonCrudConfig._LIST_START+"' value - "+sFetchStartFrom);
+							"Invalid "+_QPARAM_PAGINATION+" '"+JsonCrudConfig._LIST_START+"' value - "+sFetchStartFrom);
 				}
 			}
 			//
@@ -105,7 +105,7 @@ public class CRUDServiceUtil {
 				catch(NumberFormatException ex)
 				{
 					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
-							"Invalid '"+JsonCrudConfig._LIST_FETCHSIZE+"' value - "+sFetchSize);
+							"Invalid "+_QPARAM_PAGINATION+" '"+JsonCrudConfig._LIST_FETCHSIZE+"' value - "+sFetchSize);
 				}
 			}
 		}
@@ -151,7 +151,7 @@ public class CRUDServiceUtil {
     	return listReturn;
     }
 
-    public static List<String> getSorting(Map<String, Map<String, String>> mapQueryParams)
+    public static List<String> getSorting(Map<String, Map<String, String>> mapQueryParams) throws JsonCrudException
     {
     	Map<String, String> mapSorting = mapQueryParams.get(_QPARAM_SORTING);
     	
@@ -165,6 +165,8 @@ public class CRUDServiceUtil {
 	    	for(String sKey : mapSorting.keySet())
 	    	{
 	    		String sSortDir = String.valueOf(mapSorting.get(sKey));
+	    		if(sSortDir==null)
+	    			sSortDir = "";
 	    		
 	    		String sSorting = "";
 	    		
@@ -174,7 +176,15 @@ public class CRUDServiceUtil {
 	    		}
 	    		else
 	    		{
-	    			sSorting = sKey+"."+sSortDir;
+	    			if(sSortDir.equalsIgnoreCase("desc") || sSortDir.equalsIgnoreCase("asc"))
+	    			{
+	    				sSorting = sKey+"."+sSortDir;
+	    			}
+	    			else
+	    			{
+						throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
+								"Invalid '"+_QPARAM_SORTING+"' value - "+sSortDir);
+	    			}
 	    		}
 	    		listSortFields.add(sSorting);
 	    	}
