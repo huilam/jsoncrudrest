@@ -164,29 +164,23 @@ public class CRUDServiceUtil {
     		listSortFields = new ArrayList<String>();
 	    	for(String sKey : mapSorting.keySet())
 	    	{
-	    		String sSortDir = String.valueOf(mapSorting.get(sKey));
-	    		if(sSortDir==null)
-	    			sSortDir = "";
-	    		
-	    		String sSorting = "";
-	    		
-	    		if(sSortDir.trim().equalsIgnoreCase(""))
+	    		if(sKey.endsWith("."))
+	    			sKey = sKey + "asc";
+
+	    		String sSortDir = "";
+	    		int iPos = sKey.indexOf(".");
+	    		if(iPos>-1 && iPos<sKey.length())
 	    		{
-	    			sSorting = sKey;
-	    		}
-	    		else
-	    		{
-	    			if(sSortDir.equalsIgnoreCase("desc") || sSortDir.equalsIgnoreCase("asc"))
-	    			{
-	    				sSorting = sKey+"."+sSortDir;
-	    			}
-	    			else
+	    			sSortDir = sKey.substring(iPos+1);
+	    			
+	    			if(!(sSortDir.equalsIgnoreCase("desc") || sSortDir.equalsIgnoreCase("asc")))
 	    			{
 						throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
 								"Invalid '"+_QPARAM_SORTING+"' value - "+sSortDir);
 	    			}
 	    		}
-	    		listSortFields.add(sSorting);
+	    		
+	    		listSortFields.add(sKey);
 	    	}
     	}
     	return listSortFields;
@@ -203,7 +197,11 @@ public class CRUDServiceUtil {
     	
 	    	for(String sFilterKey : mapKV.keySet())
 	    	{
-	    		jsonKV.put(sFilterKey, mapKV.get(sFilterKey));
+	    		String sVal = mapKV.get(sFilterKey);
+	    		if(!"".equalsIgnoreCase(sVal))
+	    		{
+	    			jsonKV.put(sFilterKey, sVal);
+	    		}
 	    	}
        	}
     	    	
