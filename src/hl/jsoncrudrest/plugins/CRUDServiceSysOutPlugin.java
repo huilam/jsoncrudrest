@@ -17,7 +17,7 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 		System.out.println("inputContentData="+aCrudReq.getInputContentData());
 		System.out.println("filters="+aCrudReq.getCrudFilters().toString());
 		System.out.println("sorting="+String.join(", ", aCrudReq.getCrudSorting()));
-		System.out.println("returns="+String.join(", ", aCrudReq.getCrudReturns()));
+		System.out.println("returns("+(aCrudReq.isReturnsExclude()?"exclude":"include")+")="+String.join(", ", aCrudReq.getCrudReturns()));
 		System.out.println("urlPathParam="+aCrudReq.getUrlPathParam());
 		System.out.println("echoJsonAttrs="+aCrudReq.getEchoJsonAttrs());
 		System.out.println("pagination=start:"+aCrudReq.getPaginationStartFrom());
@@ -38,7 +38,9 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 		return aHttpResp;
 	}
 	
-	public HttpResp handleException(CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException) {
+	public HttpResp handleException(CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException) 
+			throws JsonCrudException 
+	{
 		System.out.println();
 		System.out.println("[ handleException ]");
 		System.out.println("httpStatus="+aHttpResp.getHttp_status());
@@ -48,6 +50,8 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 		
 		if(aException!=null)
 		{
+			aException.setDebugMode(true);
+			
 			System.out.println("Exception="+aException.getMessage());
 			
 			Throwable t = aException.getCause();
@@ -67,6 +71,9 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 				}
 				System.out.println("StackTrace="+sb.toString());
 			}
+			
+
+			throw aException;
 		}
 		else
 		{
@@ -74,6 +81,7 @@ public class CRUDServiceSysOutPlugin implements ICRUDServicePlugin {
 		}
 		
 		System.out.println();
+		
 		return aHttpResp;
 	}
 
