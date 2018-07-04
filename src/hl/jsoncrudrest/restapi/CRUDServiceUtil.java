@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONObject;
 
+import hl.jsoncrud.CRUDMgr;
 import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
 
@@ -91,7 +92,7 @@ public class CRUDServiceUtil {
 				}
 				catch(NumberFormatException ex)
 				{
-					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
+					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
 							"Invalid "+_QPARAM_PAGINATION+" '"+JsonCrudConfig._LIST_START+"' value - "+sFetchStartFrom);
 				}
 			}
@@ -104,7 +105,7 @@ public class CRUDServiceUtil {
 				}
 				catch(NumberFormatException ex)
 				{
-					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
+					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
 							"Invalid "+_QPARAM_PAGINATION+" '"+JsonCrudConfig._LIST_FETCHSIZE+"' value - "+sFetchSize);
 				}
 			}
@@ -164,23 +165,23 @@ public class CRUDServiceUtil {
     		listSortFields = new ArrayList<String>();
 	    	for(String sKey : mapSorting.keySet())
 	    	{
-	    		if(sKey.endsWith("."))
-	    			sKey = sKey + "asc";
+	    		String sSortField 	= sKey;
+	    		String sSortDir 	= mapSorting.get(sKey);
+	    		if(sSortDir==null)
+	    			sSortDir = "";
 
-	    		String sSortDir = "";
-	    		int iPos = sKey.indexOf(".");
-	    		if(iPos>-1 && iPos<sKey.length())
+	    		if(sSortDir.trim().length()>0)
 	    		{
-	    			sSortDir = sKey.substring(iPos+1);
-	    			
-	    			if(!(sSortDir.equalsIgnoreCase("desc") || sSortDir.equalsIgnoreCase("asc")))
+	    			if(!(sSortDir.equalsIgnoreCase(CRUDMgr.JSONSORTING_DESC) || sSortDir.equalsIgnoreCase(CRUDMgr.JSONSORTING_ASC)))
 	    			{
-						throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_FILTER, 
-								"Invalid '"+_QPARAM_SORTING+"' value - "+sSortDir);
-	    			}
+						throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_SORTING, 
+								"Invalid "+_QPARAM_SORTING+" value - "+sSortDir);
+	    			}	    			
+
+	    			sSortField = sSortField + "."+sSortDir;
 	    		}
 	    		
-	    		listSortFields.add(sKey);
+	    		listSortFields.add(sSortField);
 	    	}
     	}
     	return listSortFields;
