@@ -92,8 +92,10 @@ public class CRUDServiceUtil {
 				}
 				catch(NumberFormatException ex)
 				{
-					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
-							"Invalid "+_QPARAM_PAGINATION+" '"+JsonCrudConfig._LIST_START+"' value - "+sFetchStartFrom);
+					JsonCrudException e = new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
+							"Invalid "+_QPARAM_PAGINATION+" value !");
+					e.setErrorSubject(JsonCrudConfig._LIST_START+":"+sFetchStartFrom);
+					throw e;
 				}
 			}
 			//
@@ -105,8 +107,10 @@ public class CRUDServiceUtil {
 				}
 				catch(NumberFormatException ex)
 				{
-					throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
-							"Invalid "+_QPARAM_PAGINATION+" '"+JsonCrudConfig._LIST_FETCHSIZE+"' value - "+sFetchSize);
+					JsonCrudException e = new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
+							"Invalid "+_QPARAM_PAGINATION+" value !");
+					e.setErrorSubject(JsonCrudConfig._LIST_FETCHSIZE+":"+sFetchSize);
+					throw e;
 				}
 			}
 		}
@@ -174,8 +178,10 @@ public class CRUDServiceUtil {
 	    		{
 	    			if(!(sSortDir.equalsIgnoreCase(CRUDMgr.JSONSORTING_DESC) || sSortDir.equalsIgnoreCase(CRUDMgr.JSONSORTING_ASC)))
 	    			{
-						throw new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_SORTING, 
-								"Invalid "+_QPARAM_SORTING+" value - "+sSortDir);
+	    				JsonCrudException e = new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_SORTING, 
+								"Invalid "+_QPARAM_SORTING+" value ! ");
+	    				e.setErrorSubject(sSortField+":"+sSortDir);
+	    				throw e;
 	    			}	    			
 
 	    			sSortField = sSortField + "."+sSortDir;

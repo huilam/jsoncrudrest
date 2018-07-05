@@ -55,7 +55,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.4.2 beta";
+	private static String _VERSION = "0.4.3 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -720,8 +720,10 @@ public class CRUDService extends HttpServlet {
     			{
     				return resp;				
     			}
-			} catch (IOException e) {
-				throw new JsonCrudException(_ERROR_PROXY, "proxyurl:"+sProxyApiUrl+"  configkey:"+sProxyUrlKey, e);
+			} catch (IOException ioEx) {
+				JsonCrudException e = new JsonCrudException(_ERROR_PROXY, ioEx);
+				e.setErrorSubject(sProxyUrlKey+":"+sProxyApiUrl);
+				throw e;
 			}
     	}
     	
@@ -787,15 +789,22 @@ public class CRUDService extends HttpServlet {
 		
     	if(sPluginClassName!=null && sPluginClassName.trim().length()>0)
     	{
+    		JsonCrudException e = null;
 	    	try {
 				plugin = (ICRUDServicePlugin) Class.forName(sPluginClassName).newInstance();
-			} catch (InstantiationException e) {
-				throw new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, e);
-			} catch (IllegalAccessException e) {
-				throw new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, e);
-			} catch (ClassNotFoundException e) {
-				throw new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, e);
+			} catch (InstantiationException ex) {
+				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
+			} catch (IllegalAccessException ex) {
+				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
+			} catch (ClassNotFoundException ex) {
+				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
 			}
+	    	
+	    	if(e!=null)
+	    	{
+	    		e.setErrorSubject(sPluginClassName);
+	    		throw e;
+	    	}
     	}
     	return plugin;
     }
