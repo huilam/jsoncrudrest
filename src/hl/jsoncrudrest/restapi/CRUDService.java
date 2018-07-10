@@ -55,7 +55,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.4.3 beta";
+	private static String _VERSION = "0.4.4 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -275,8 +275,9 @@ public class CRUDService extends HttpServlet {
 			ICRUDServicePlugin plugin = null;
 				//
 			try {
+				plugin = getPlugin(mapCrudConfig);
+				//
 				crudReq = new CRUDServiceReq(req, mapCrudConfig);
-			
 				crudReq.setCrudKey(sCrudKey);
 				crudReq.addUrlPathParam(mapPathParams);
 				
@@ -329,7 +330,6 @@ public class CRUDService extends HttpServlet {
 					}
 				}
 				//
-				plugin = getPlugin(mapCrudConfig);
 				
 				long lStart = System.currentTimeMillis();
 				crudReq = preProcess(plugin, crudReq);
