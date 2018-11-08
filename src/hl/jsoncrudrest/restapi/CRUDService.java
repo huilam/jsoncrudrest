@@ -71,12 +71,11 @@ public class CRUDService extends HttpServlet {
 	
 	public CRUDService() {
         super();
-        logger.log(Level.INFO, "CRUDService() constructor");
 	}
 	
 	public void init()
 	{
-        logger.log(Level.INFO, "CRUDService.init()");
+        logger.log(Level.INFO, "CRUDService.init() start.");
 		
         mapAutoUrlCrudkey 	= new HashMap<Integer, Map<String, String>>();
         mapMappedUrlCrudkey = new HashMap<Integer, Map<String, String>>();
@@ -139,7 +138,8 @@ public class CRUDService extends HttpServlet {
 	        	}
     		}
         }
-    }
+        logger.log(Level.INFO, "CRUDService.init() completed.");
+   }
     
     @Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
