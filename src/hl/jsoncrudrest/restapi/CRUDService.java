@@ -1,6 +1,7 @@
 package hl.jsoncrudrest.restapi;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -216,6 +217,17 @@ public class CRUDService extends HttpServlet {
     	
     	if(sPathInfo==null)
     		sPathInfo = "";
+    	
+    	if(req.getCharacterEncoding()==null || req.getCharacterEncoding().trim().length()==0)
+    	{
+    		try {
+				req.setCharacterEncoding("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    	
     	
     	HttpResp httpReq = new HttpResp();
     	httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
