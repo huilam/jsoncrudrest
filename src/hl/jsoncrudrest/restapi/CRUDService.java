@@ -56,14 +56,14 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.4.4 beta";
+	private static String _VERSION = "0.4.5 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
 	
 	private Map<String, String> mapDefaultConfig 					= null;
 	
-	private Logger logger = Logger.getLogger(CRUDService.class.getName());
+	private static Logger logger = Logger.getLogger(CRUDService.class.getName());
 	
 	public static final String GET 		= "GET";
 	public static final String POST 	= "POST";
@@ -147,10 +147,29 @@ public class CRUDService extends HttpServlet {
 
     	String sHttpMethod = request.getMethod();
     	String sPath = request.getPathInfo();
+    	if(sPath==null)
+    		sPath = "";
     	
-    	boolean isAbout = GET.equals(sHttpMethod) && "/about".equals(sPath);
+    	boolean isAbout = GET.equals(sHttpMethod) && sPath.startsWith("/about");
+    	
     	if(isAbout)
     	{
+    		if(sPath.startsWith("/about/loglevel/"))
+    		{
+    			if(sPath.endsWith("/DEBUG"))
+    			{
+    				logger.setLevel(Level.FINEST);
+    			}
+    			else if(sPath.endsWith("/INFO"))
+    			{
+    				logger.setLevel(Level.INFO);
+    			}
+    			else if(sPath.endsWith("/OFF"))
+    			{
+    				logger.setLevel(Level.OFF);
+    			}
+    		}
+    		
 			try {
 				RestApiUtil.processHttpResp(
 						response, 
@@ -161,7 +180,7 @@ public class CRUDService extends HttpServlet {
 				throw new ServletException(e);
 			}
     	}
-    	else
+     	else
     	{
     		processHttpMethods(request, response);
     	}
@@ -184,8 +203,16 @@ public class CRUDService extends HttpServlet {
     
     private JSONObject getAbout()
     {
+   		String sLoggerLevel = "";
+   		
+   		if(logger.getLevel()!=null)
+   		{
+   			sLoggerLevel = logger.getLevel().getLocalizedName();
+   		}
+   		
     	JSONObject json = new JSONObject();
-    	json.put("jsoncrud.restapi", _VERSION);
+    	json.put("jsoncrud.restapi.version", _VERSION);
+    	json.put("jsoncrud.restapi.loglevel", sLoggerLevel);
     	json.put("jsoncrud.framework",JsonCrudRestUtil.getJsonCrudVersion());
     	return json;
     }
@@ -638,16 +665,18 @@ public class CRUDService extends HttpServlet {
     	return jsonResult;
     }
 
-    public HttpResp forwardToProxy(
+    private HttpResp forwardToProxy(
     		CRUDServiceReq aCrudReq, HttpResp aHttpResp) throws JsonCrudException
     {
-    	String sHttpMethod = aCrudReq.getHttpMethod().toLowerCase();
+    	String sHttpMethod 	= aCrudReq.getHttpMethod().toLowerCase();
     	String sProxyUrlKey = "restapi.proxy."+sHttpMethod+".url";
-    	String sProxyUrl = aCrudReq.getConfigMap().get(sProxyUrlKey);
+    	String sProxyUrl 	= aCrudReq.getConfigMap().get(sProxyUrlKey);
+    	String sOrgPathInfo = aCrudReq.getHttpServletReq().getPathInfo();
     	
     	if(sProxyUrl==null || sProxyUrl.trim().length()==0)
     	{
-    		sProxyUrl = aCrudReq.getConfigMap().get("restapi.proxy.url");
+    		sProxyUrlKey 	= "restapi.proxy.url";
+    		sProxyUrl 		= aCrudReq.getConfigMap().get(sProxyUrlKey);
     	}
     	
     	if(sProxyUrl!=null && sProxyUrl.trim().length()>0)
@@ -659,7 +688,7 @@ public class CRUDService extends HttpServlet {
 	    		//Url Forming  
     			HttpServletRequest req 	= aCrudReq.getHttpServletReq();
     			String sProtocol 		= req.getScheme();
-    			String sContextRoot 	= req.getContextPath()+"/";
+    			String sContextRoot 	= req.getContextPath();
     			sbApiUrl.append(sProtocol);
     			sbApiUrl.append("://").append(req.getServerName());
     			sbApiUrl.append(":").append(req.getServerPort()).append(sContextRoot);
@@ -701,7 +730,7 @@ public class CRUDService extends HttpServlet {
     		}
     		
     		//debug
-    		logger.log(Level.FINEST, "[debug] proxyurl:"+sProxyApiUrl+"  configkey:"+sProxyUrlKey);
+    		logger.log(Level.FINEST, "[debug] pathinfo:"+sOrgPathInfo+"  configkey:"+sProxyUrlKey+"  proxyurl:"+sProxyApiUrl);
     		
     		try {
     			HttpResp resp = null;
