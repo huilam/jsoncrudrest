@@ -47,6 +47,8 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_DEF_RETURNS 				= "restapi.default.returns";
 	protected static String _RESTAPI_DEF_RETURNS_EXCLUDE		= "restapi.default.returns.exclude";
 	
+	protected static String _RESTAPI_DEF_CONTENT_TYPE			= "restapi.default.noHeader.content-type";
+	
 	protected static String _RESTAPI_PLUGIN_CLASSNAME = "restapi.plugin.implementation";
 	
 	protected static String _PAGINATION_STARTFROM 	= JsonCrudConfig._LIST_START;
@@ -56,12 +58,13 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.4.5 beta";
+	private static String _VERSION = "0.4.6 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
 	
 	private Map<String, String> mapDefaultConfig 					= null;
+	private String default_content_type								= TYPE_APP_JSON;
 	
 	private static Logger logger = Logger.getLogger(CRUDService.class.getName());
 	
@@ -91,7 +94,11 @@ public class CRUDService extends HttpServlet {
         		for(String sDefKey : mapConfig.keySet())
         		{
         			String sDefVal = mapConfig.get(sDefKey);
-        			mapDefaultConfig.put(sDefKey, sDefVal);
+
+        			if(sDefKey.equalsIgnoreCase(_RESTAPI_DEF_CONTENT_TYPE))
+        			{
+        				default_content_type = sDefVal;
+        			}
         		}
         	}
         	else if(sKey.toLowerCase().startsWith("crud."))
@@ -174,7 +181,7 @@ public class CRUDService extends HttpServlet {
 				RestApiUtil.processHttpResp(
 						response, 
 						HttpServletResponse.SC_OK, 
-						TYPE_APP_JSON, 
+						default_content_type, 
 						getAbout().toString());
 			} catch (IOException e) {
 				throw new ServletException(e);
@@ -519,6 +526,7 @@ public class CRUDService extends HttpServlet {
 			{
 				//unhandled error
 				try {
+					e.printStackTrace();
 					httpReq = handleException(plugin, crudReq, httpReq, e);
 				}
 				catch(JsonCrudException e2)
@@ -575,6 +583,10 @@ public class CRUDService extends HttpServlet {
 					if(sContentData.startsWith("{") && sContentData.endsWith("}"))
 					{
 						httpReq.setContent_type(TYPE_APP_JSON);
+					}
+					else
+					{
+						httpReq.setContent_type(default_content_type);
 					}
 				}
 			}
