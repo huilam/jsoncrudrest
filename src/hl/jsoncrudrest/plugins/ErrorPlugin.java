@@ -9,7 +9,7 @@ import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrudrest.restapi.CRUDServiceReq;
 import hl.jsoncrudrest.restapi.ICRUDServicePlugin;
 
-public class EchoPlugin implements ICRUDServicePlugin {
+public class ErrorPlugin implements ICRUDServicePlugin {
 
 	public CRUDServiceReq preProcess(CRUDServiceReq aCrudReq) {
 		System.out.println();
@@ -30,6 +30,13 @@ public class EchoPlugin implements ICRUDServicePlugin {
 	}
 
 	public HttpResp postProcess(CRUDServiceReq aCrudReq, HttpResp aHttpResp) {
+
+		JSONObject json = new JSONObject();
+		json.put("errors", "status 543");
+		
+		aHttpResp.setHttp_status(543);
+		aHttpResp.setContent_data(json.toString());
+		
 		System.out.println();
 		System.out.println("[ "+this.getClass().getSimpleName()+".postProcess ]");
 		System.out.println("httpStatus="+aHttpResp.getHttp_status());
@@ -37,11 +44,7 @@ public class EchoPlugin implements ICRUDServicePlugin {
 		System.out.println("contentType="+aHttpResp.getContent_type());
 		System.out.println("contentData="+aHttpResp.getContent_data());
 		System.out.println();
-		
-		JSONObject json = new JSONObject();
-		json.put("echo-text", aCrudReq.getUrlPathParam("echo-text"));
-		aHttpResp.setContent_data(json.toString());
-		return aHttpResp;
+				return aHttpResp;
 	}
 	
 	public HttpResp handleException(CRUDServiceReq aCrudReq, HttpResp aHttpResp, JsonCrudException aException) 

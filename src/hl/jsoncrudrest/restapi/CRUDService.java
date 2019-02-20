@@ -63,7 +63,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.4.7 beta";
+	private static String _VERSION = "0.4.8 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -560,19 +560,23 @@ public class CRUDService extends HttpServlet {
 				
 				if(jsonResult.has("errors"))
 				{
-					JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
-					for(int i=0; i<jArrErrsFromPlugin.length(); i++)
+					if(jsonResult.get("errors") instanceof JSONArray)
 					{
-						jArrErrors.put(jArrErrsFromPlugin.getJSONObject(i));
+						JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
+						for(int i=0; i<jArrErrsFromPlugin.length(); i++)
+						{
+							jArrErrors.put(jArrErrsFromPlugin.getJSONObject(i));
+						}
 					}
 				}
 				
-				jsonResult.put("errors", jArrErrors);
-				
-				httpReq.setContent_type(TYPE_APP_JSON);
-				httpReq.setContent_data(jsonResult.toString());
-				httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
-				
+				if(jArrErrors.length()>0)
+				{
+					jsonResult.put("errors", jArrErrors);
+					httpReq.setContent_type(TYPE_APP_JSON);
+					httpReq.setContent_data(jsonResult.toString());
+					httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
+				}
 			}
 			
 		}
