@@ -38,6 +38,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_PROXY_URL			= "restapi.proxy.url";
 	protected static String _RESTAPI_PROXY_HOSTNAME2IP	= "restapi.proxy.hostname-to-ip";
 	
+	protected static String _RESTAPI_DISABLED		= "restapi.disabled";
 	protected static String _RESTAPI_ID_ATTRNAME	= "restapi.id";
 	protected static String _RESTAPI_ECHO_PREFIX	= "restapi.echo.jsonattr.prefix";
 	protected static String _RESTAPI_FETCH_LIMIT	= "restapi.fetch.limit";
@@ -63,7 +64,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.4.8 beta";
+	private static String _VERSION = "0.4.9 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -111,44 +112,53 @@ public class CRUDService extends HttpServlet {
 	    		String sCrudKey = sKey.substring("crud.".length());
 	    		
 	   			Map<String, String> mapConfig = config.getConfig(sKey);
-	        	String sMappedURL = mapConfig.get(_RESTAPI_MAPPED_URL);
-	        	if(sMappedURL!=null)
-	        	{
-	        		String[] sMappedURLs = RESTApiUtil.getUrlSegments(sMappedURL);
-	        		if(sMappedURLs!=null)
-	        		{
-	        			Map<String, String> mapUrl = mapMappedUrlCrudkey.get(sMappedURLs.length);
-	        			if(mapUrl==null)
-	        			{
-	        				mapUrl = new HashMap<String, String>();
-	        			}
-	        			mapUrl.put(sMappedURL, sCrudKey);
-	        			mapMappedUrlCrudkey.put(sMappedURLs.length, mapUrl);
-	        		}
-	        	}
-	        	else //if(sMappedURL==null)
-	        	{
-	
-	    			String sId = mapConfig.get(_RESTAPI_ID_ATTRNAME);
-	    			if(sId==null)
-	    				sId = "id";
-	    			
-	        		Map<String, String> mapOne = mapAutoUrlCrudkey.get(1);
-	        		if(mapOne==null)
-	        		{
-	        			mapOne = new HashMap<String, String>();
-	        		}
-	        		Map<String, String> mapTwo = mapAutoUrlCrudkey.get(2);
-	        		if(mapTwo==null)
-	        		{
-	        			mapTwo = new HashMap<String, String>();
-	        		}
-	        		mapOne.put("/"+sCrudKey, sCrudKey);
-	        		mapTwo.put("/"+sCrudKey+"/{"+sId+"}", sCrudKey);
-	        		
-	        		mapAutoUrlCrudkey.put(1, mapOne);
-	        		mapAutoUrlCrudkey.put(2, mapTwo);
-	        	}
+	   			
+	   			boolean isDisabled = "true".equalsIgnoreCase(mapConfig.get(_RESTAPI_DISABLED));
+	   			if(!isDisabled)
+	   			{
+		        	String sMappedURL = mapConfig.get(_RESTAPI_MAPPED_URL);
+		        	if(sMappedURL!=null)
+		        	{
+		        		String[] sMappedURLs = RESTApiUtil.getUrlSegments(sMappedURL);
+		        		if(sMappedURLs!=null)
+		        		{
+		        			Map<String, String> mapUrl = mapMappedUrlCrudkey.get(sMappedURLs.length);
+		        			if(mapUrl==null)
+		        			{
+		        				mapUrl = new HashMap<String, String>();
+		        			}
+		        			mapUrl.put(sMappedURL, sCrudKey);
+		        			mapMappedUrlCrudkey.put(sMappedURLs.length, mapUrl);
+		        		}
+		        	}
+		        	else //if(sMappedURL==null)
+		        	{
+		
+		    			String sId = mapConfig.get(_RESTAPI_ID_ATTRNAME);
+		    			if(sId==null)
+		    				sId = "id";
+		    			
+		        		Map<String, String> mapOne = mapAutoUrlCrudkey.get(1);
+		        		if(mapOne==null)
+		        		{
+		        			mapOne = new HashMap<String, String>();
+		        		}
+		        		Map<String, String> mapTwo = mapAutoUrlCrudkey.get(2);
+		        		if(mapTwo==null)
+		        		{
+		        			mapTwo = new HashMap<String, String>();
+		        		}
+		        		mapOne.put("/"+sCrudKey, sCrudKey);
+		        		mapTwo.put("/"+sCrudKey+"/{"+sId+"}", sCrudKey);
+		        		
+		        		mapAutoUrlCrudkey.put(1, mapOne);
+		        		mapAutoUrlCrudkey.put(2, mapTwo);
+		        	}
+	    		}
+	   			else
+	   			{
+	   				logger.log(Level.INFO, "[skipped] crud.{0}.restapi is disabled.",sKey);
+	   			}
     		}
         }
         logger.log(Level.INFO, "CRUDService.init() completed.");
