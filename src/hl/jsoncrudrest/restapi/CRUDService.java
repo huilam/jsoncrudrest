@@ -64,7 +64,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.4.9 beta";
+	private static String _VERSION = "0.5.0 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -172,11 +172,11 @@ public class CRUDService extends HttpServlet {
     	if(sPath==null)
     		sPath = "";
     	
-    	boolean isAbout = GET.equals(sHttpMethod) && sPath.startsWith("/about");
+    	boolean isAbout = GET.equals(sHttpMethod) && sPath.startsWith("/about/framework");
     	
     	if(isAbout)
     	{
-    		if(sPath.startsWith("/about/loglevel/"))
+    		if(sPath.startsWith("/about/framework/loglevel/"))
     		{
     			if(sPath.endsWith("/DEBUG"))
     			{
