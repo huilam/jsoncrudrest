@@ -105,6 +105,8 @@ public class CRUDService extends HttpServlet {
         			{
         				default_content_type = sDefVal;
         			}
+        			
+        			mapDefaultConfig.put(sDefKey, sDefVal);
         		}
         	}
         	else if(sKey.toLowerCase().startsWith("crud."))
@@ -628,7 +630,7 @@ public class CRUDService extends HttpServlet {
     
     private HttpResp getConfigResp(CRUDServiceReq crudReq, HttpResp httpReq, String aConfigPrefix)
     {
-		int iHttpStatus = 500;
+		int iHttpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 		String sHttpMethod 	= crudReq.getHttpMethod().toLowerCase();
 		String sHttpStatus 	= null;
@@ -668,7 +670,11 @@ public class CRUDService extends HttpServlet {
 			}
 			catch(NumberFormatException numEx)
 			{
-				iHttpStatus = 500;
+				JSONObject jsonErr 	= new JSONObject();
+				jsonErr.put("httpstatus", sHttpStatus);
+				jsonErr.put(numEx.getClass().getName(), numEx.getMessage());
+				sContentData = jsonErr.toString();
+				iHttpStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 			}
     	}
 		
