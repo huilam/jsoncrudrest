@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -78,6 +79,8 @@ public class CRUDService extends HttpServlet {
 	public static final String POST 	= "POST";
 	public static final String DELETE	= "DELETE";
 	public static final String PUT 		= "PUT";
+	
+	private static Pattern pattNumberic = Pattern.compile("[0-9\\.]+");
 	
 	public CRUDService() {
         super();
@@ -374,11 +377,7 @@ public class CRUDService extends HttpServlet {
 						{
 							if(crudReq.isIdFieldNumericOnly())
 							{
-								try
-								{
-									Double.parseDouble(sIdValue);
-								}
-								catch(NumberFormatException ex)
+								if(!pattNumberic.matcher(sIdValue).matches())
 								{
 									crudReq.setSkipJsonCrudDbProcess(true);
 									httpReq = getNotFoundResp(crudReq, httpReq);
