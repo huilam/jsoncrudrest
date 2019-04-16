@@ -751,21 +751,32 @@ public class CRUDService extends HttpServlet {
     			sbApiUrl.append(sProxyUrl);
     		}
     		
-    		//Query String
-    		String sQueryStr = aCrudReq.getHttpServletReq().getQueryString();
-    		if(sQueryStr!=null)
+    		sbApiUrl.append("?1=1");
+    		HttpServletRequest req = aCrudReq.getHttpServletReq();
+    		//
+   			sbApiUrl.append(constructJsonCrudParamUrl(CRUDServiceUtil._QPARAM_FILTERS, aCrudReq.getCrudFilters()));
+  			sbApiUrl.append(constructJsonCrudParamUrl(CRUDServiceUtil._QPARAM_SORTING, aCrudReq.getCrudSorting()));  			   			
+  			String sReturnParamName = CRUDServiceUtil._QPARAM_RETURNS;
+  			if(req.getParameter(CRUDServiceUtil._QPARAM_RETURNS_EXCLUDE)!=null)
+  			{
+  				sReturnParamName = CRUDServiceUtil._QPARAM_RETURNS_EXCLUDE;
+  			}
+  			sbApiUrl.append(constructJsonCrudParamUrl(sReturnParamName, aCrudReq.getCrudReturns()));
+    		
+    		//Adding custom Query String
+    		List<String> listProcessedParamName = CRUDServiceUtil.reservedParamsList;
+    		for(String sParamName : req.getParameterMap().keySet())
     		{
-        		if(sbApiUrl.toString().indexOf("?")>-1)
-        		{
-        			sbApiUrl.append("&");
-        		}
-        		else
-        		{
-        			sbApiUrl.append("?");
-        		}
-        		sbApiUrl.append(sQueryStr);
+    			if(!listProcessedParamName.contains(sParamName))
+    			{
+    				String[] paramVals = req.getParameterValues(sParamName);
+    				for(int i=0; i<paramVals.length; i++)
+    				{
+    					sbApiUrl.append("&").append(sParamName).append("=").append(paramVals[i]);
+    				}
+    			}
     		}
-
+     		
 			String sProxyApiUrl = sbApiUrl.toString();
 
     		//Path param
@@ -821,6 +832,53 @@ public class CRUDService extends HttpServlet {
     	
     	
     	return null;
+    }
+    
+    private String constructJsonCrudParamUrl(String aParamName, List<String> aList)
+    {
+		StringBuffer sb = new StringBuffer();
+		if(aList!=null && aList.size()>0)
+		{
+			for(String sVal : aList)
+    		{
+				if(sb.length()>0)
+				{
+					sb.append(CRUDServiceUtil.QPARAM_MULTIKEY_SEPARATOR);
+				}
+				sb.append(sVal);
+    		}
+		}
+		
+		if(sb.length()>0)
+		{
+			sb.insert(0, "&"+aParamName+"=");
+		}
+		
+		return sb.toString();
+    }
+
+    private String constructJsonCrudParamUrl(String aParamName, JSONObject aJsonObject)
+    {
+		StringBuffer sb = new StringBuffer();
+		if(aJsonObject!=null && aJsonObject.keySet().size()>0)
+		{
+			for(String sJsonKeys : aJsonObject.keySet())
+    		{
+				if(sb.length()>0)
+				{
+					sb.append(CRUDServiceUtil.QPARAM_MULTIKEY_SEPARATOR);
+				}
+				sb.append(sJsonKeys).append(CRUDServiceUtil.QPARAM_MULTIKEY_KEYVALUE_SEPARATOR);
+				sb.append(aJsonObject.get(sJsonKeys));
+    		}
+		}
+		
+		if(sb.length()>0)
+		{
+			sb.insert(0, "&"+aParamName+"=");
+		}
+
+		return sb.toString();
     }
     
     public CRUDServiceReq preProcess(

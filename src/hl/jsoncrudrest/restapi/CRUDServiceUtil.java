@@ -26,12 +26,23 @@ public class CRUDServiceUtil {
 	
 	protected static String _QPARAM_RETURNS 		= "returns";
 	protected static String _QPARAM_RETURNS_EXCLUDE	= "returns.exclude";
+	
+	public static List<String> reservedParamsList = null;
+	static
+	{
+		reservedParamsList = new ArrayList<String>();
+		reservedParamsList.add(_QPARAM_PAGINATION);
+		reservedParamsList.add(_QPARAM_FILTERS);
+		reservedParamsList.add(_QPARAM_SORTING);
+		reservedParamsList.add(_QPARAM_RETURNS);
+		reservedParamsList.add(_QPARAM_RETURNS_EXCLUDE);
+	}
 	//
 	private static final String QPARAM_SEPARATOR 			= "&";
 	private static final String QPARAM_KEYVALUE_SEPARATOR 	= "=";
 	
-	private static String QPARAM_MULTIKEY_KEYVALUE_SEPARATOR = ":";
-	private static String QPARAM_MULTIKEY_SEPARATOR = ",";
+	public static String QPARAM_MULTIKEY_KEYVALUE_SEPARATOR = ":";
+	public static String QPARAM_MULTIKEY_SEPARATOR 			= ",";
 
     protected static Map<String, Map<String,String>> getQueryParamsMap(HttpServletRequest req)
     {
