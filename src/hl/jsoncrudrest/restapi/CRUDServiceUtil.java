@@ -231,7 +231,7 @@ public class CRUDServiceUtil {
 	{
 		try {
 			return URLDecoder.decode(aUrl, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
+		} catch (Exception e) {
 			return aUrl;
 		}
 	}
