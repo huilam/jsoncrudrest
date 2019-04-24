@@ -1,11 +1,12 @@
 package hl.jsoncrudrest.restapi;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -17,6 +18,8 @@ import hl.jsoncrud.JsonCrudException;
 
 public class CRUDServiceUtil {
 
+	private static Logger logger 			= Logger.getLogger(CRUDServiceUtil.class.getName());
+	//
 	private static String URL_SEPARATOR		= "/";
 	
 	//
@@ -232,6 +235,7 @@ public class CRUDServiceUtil {
 		try {
 			return URLDecoder.decode(aUrl, "UTF-8");
 		} catch (Exception e) {
+			logger.log(Level.WARNING, e.getMessage(), e);
 			return aUrl;
 		}
 	}
