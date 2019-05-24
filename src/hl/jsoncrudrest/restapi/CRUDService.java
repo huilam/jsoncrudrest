@@ -738,10 +738,23 @@ public class CRUDService extends HttpServlet {
     			//Url Forming  
     			String sProtocol 		= req.getScheme();
     			String sContextRoot 	= req.getContextPath();
+    			
+    			if(sContextRoot==null || "/".equals(sContextRoot))
+    			{
+    				sContextRoot = "";
+    			}
+    			
+    			if(!"/".equals(req.getServletPath()))
+    			{
+    				if(sContextRoot.length()>0 && !"/".equals(sContextRoot))
+        			{
+        				sContextRoot = sContextRoot + "/";
+        			}
+	    			sContextRoot = sContextRoot + req.getServletPath();
+    			}
+    			
     			sbApiUrl.append(sProtocol);
     			sbApiUrl.append("://").append(sApiServer);
-    			
-    			
     			sbApiUrl.append(":").append(req.getServerPort()).append(sContextRoot);
     			sbApiUrl.append(sProxyUrl);
     		}
@@ -750,7 +763,7 @@ public class CRUDService extends HttpServlet {
     			//full url proxy
     			sbApiUrl.append(sProxyUrl);
     		}
-    		
+
     		sbApiUrl.append("?1=1");
     		HttpServletRequest req = aCrudReq.getHttpServletReq();
     		//
