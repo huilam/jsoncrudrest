@@ -733,6 +733,7 @@ public class CRUDService extends HttpServlet {
 						InetAddress apiProvider = InetAddress.getByName(req.getServerName());
 						sApiServer = apiProvider.getHostAddress();
 					} catch (UnknownHostException e) {
+						sApiServer = "127.0.0.1";
 					}
     			}
     			//Url Forming  
@@ -764,7 +765,11 @@ public class CRUDService extends HttpServlet {
     			sbApiUrl.append(sProxyUrl);
     		}
 
-    		sbApiUrl.append("?1=1");
+    		if(sbApiUrl.toString().indexOf("?")==-1)
+    		{
+    			sbApiUrl.append("?1=1");
+    		}
+    		
     		HttpServletRequest req = aCrudReq.getHttpServletReq();
     		//
    			sbApiUrl.append(constructJsonCrudParamUrl(CRUDServiceUtil._QPARAM_FILTERS, aCrudReq.getCrudFilters()));
