@@ -258,7 +258,17 @@ public class CRUDService extends HttpServlet {
 
     private void processHttpMethods(HttpServletRequest req, HttpServletResponse res) throws ServletException
     {
-    	String sPathInfo 		= req.getPathInfo();  //{crudkey}/xx/xx
+    	String sReqUniqueID = String.valueOf(System.nanoTime());
+    	
+    	String sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+" - "+req.getMethod()+" "+req.getRequestURI()+"?"+req.getQueryString();
+    	
+    	if(logger.isLoggable(Level.FINE))
+    	{
+    		logger.log(Level.FINE, sDebugAccessLog);
+    		sDebugAccessLog = null;
+    	}
+    	
+		String sPathInfo 		= req.getPathInfo();  //{crudkey}/xx/xx
     	
     	JSONObject jsonResult 	= null;
     	JSONArray jArrErrors 	= new JSONArray();
@@ -335,7 +345,7 @@ public class CRUDService extends HttpServlet {
 				sCrudKey = null;
 			}
 		}
-
+		
 		if(mapCrudConfig!=null)
 		{			
 			ICRUDServicePlugin plugin = null;
@@ -344,11 +354,20 @@ public class CRUDService extends HttpServlet {
 				plugin = getPlugin(mapCrudConfig);
 				//
 				crudReq = new CRUDServiceReq(req, mapCrudConfig);
+				crudReq.setReqUniqueID(sReqUniqueID);
 				crudReq.setCrudKey(sCrudKey);
 				crudReq.addUrlPathParam(mapPathParams);
 				
+				
 				isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
-		
+				if(isDebug && sDebugAccessLog!=null)
+				{
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  echo.attrs:"+crudReq.getEchoJsonAttrs());
+					
+					logger.info(sDebugAccessLog);
+					sDebugAccessLog = null;
+				}
+				
 				String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
 				if(sIdFieldName==null || sIdFieldName.trim().length()==0)
 					sIdFieldName = "id";
@@ -394,12 +413,25 @@ public class CRUDService extends HttpServlet {
 				//
 				
 				long lStart = System.currentTimeMillis();
+				if(isDebug)
+				{
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" preProcess.start - plugin:"+plugin.getClass().getSimpleName());
+				}
 				crudReq = preProcess(plugin, crudReq);
 				jsonProfiling.put("preProcess",System.currentTimeMillis()-lStart);
+				if(isDebug)
+				{
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" preProcess.end - plugin:"+plugin.getClass().getSimpleName());
+				}
 				
 				HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
+				
 				if(proxyHttpReq!=null)
 				{
+					if(isDebug)
+					{
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" proxy response - status:"+proxyHttpReq.getHttp_status()+" content:"+proxyHttpReq.getContent_data());
+					}
 					httpReq = proxyHttpReq;
 				}
 				else
@@ -525,9 +557,17 @@ public class CRUDService extends HttpServlet {
 				///////////////////////////
 				
 				lStart = System.currentTimeMillis();
-				httpReq = postProcess(plugin, crudReq, httpReq);
 				
+				if(isDebug)
+				{
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" postProcess.start - plugin:"+plugin.getClass().getSimpleName());
+				}
+				httpReq = postProcess(plugin, crudReq, httpReq);
 				jsonProfiling.put("postProcess",System.currentTimeMillis()-lStart);
+				if(isDebug)
+				{
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" postProcess.end - plugin:"+plugin.getClass().getSimpleName());
+				}
 				
 				if(isDebug)
 				{
@@ -545,7 +585,16 @@ public class CRUDService extends HttpServlet {
 				//unhandled error
 				try {
 					e.printStackTrace();
+					
+					if(isDebug)
+					{
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" handleException.start - plugin:"+plugin.getClass().getSimpleName());
+					}
 					httpReq = handleException(plugin, crudReq, httpReq, e);
+					if(isDebug)
+					{
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+" handleException.end - plugin:"+plugin.getClass().getSimpleName());
+					}
 				}
 				catch(JsonCrudException e2)
 				{
@@ -706,6 +755,7 @@ public class CRUDService extends HttpServlet {
     private HttpResp forwardToProxy(
     		CRUDServiceReq aCrudReq, HttpResp aHttpResp) throws JsonCrudException
     {
+    	boolean isDebug = JsonCrudRestUtil.isDebugEnabled(aCrudReq.getCrudKey());
     	String sHttpMethod 	= aCrudReq.getHttpMethod().toLowerCase();
     	String sProxyUrlKey = "restapi.proxy."+sHttpMethod+".url";
     	
@@ -796,7 +846,7 @@ public class CRUDService extends HttpServlet {
     		}
      		
 			String sProxyApiUrl = sbApiUrl.toString();
-
+			
     		//Path param
     		JSONObject jsonPathParam = aCrudReq.getUrlPathParam();
     		if(jsonPathParam!=null)
@@ -810,7 +860,12 @@ public class CRUDService extends HttpServlet {
     		}
     		
     		//debug
-    		logger.log(Level.FINEST, "[debug] pathinfo:"+sOrgPathInfo+"  configkey:"+sProxyUrlKey+"  proxyurl:"+sProxyApiUrl);
+			if(isDebug || logger.isLoggable(Level.FINE))
+			{
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Config  - pathinfo:"+sOrgPathInfo+"  configkey:"+sProxyUrlKey);
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - method:"+sHttpMethod+"  url:"+sProxyApiUrl);
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - type:"+aCrudReq.getInputContentType()+"  type:"+aCrudReq.getInputContentType()+"  data:"+aCrudReq.getInputContentData());
+			}
     		
     		try {
     			HttpResp resp = null;
@@ -837,6 +892,11 @@ public class CRUDService extends HttpServlet {
     						aCrudReq.getInputContentData());
     			}   			
     		
+    			if(isDebug)
+    			{
+    				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Response - status:"+resp.getHttp_status()+"  type:"+resp.getContent_type()+"  data:"+resp.getContent_data());
+    			}
+				
     			if(resp!=null)
     			{
     				return resp;				
