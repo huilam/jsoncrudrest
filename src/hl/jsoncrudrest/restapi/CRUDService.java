@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
@@ -81,6 +82,7 @@ public class CRUDService extends HttpServlet {
 	public static final String PUT 		= "PUT";
 	
 	private static Pattern pattNumberic = Pattern.compile("[0-9\\.]+");
+	private static Pattern pattDebugMode = Pattern.compile("/about/framework/debug/(.+?)/(true|false)");
 	
 	public CRUDService() {
         super();
@@ -177,7 +179,7 @@ public class CRUDService extends HttpServlet {
     	if(sPath==null)
     		sPath = "";
     	
-    	boolean isAbout = GET.equals(sHttpMethod) && sPath.startsWith("/about/framework");
+    	boolean isAbout = GET.equals(sHttpMethod) && sPath.equals("/about/framework");
     	
     	if(isAbout)
     	{
@@ -209,7 +211,30 @@ public class CRUDService extends HttpServlet {
     	}
      	else
     	{
-    		processHttpMethods(request, response);
+     		
+        	Matcher m = pattDebugMode.matcher(sPath);
+        	if(m.find())
+        	{
+        		String sCrudKey = m.group(1);
+        		boolean isDebug = "true".equalsIgnoreCase(m.group(2));
+        		
+        		JsonCrudRestUtil.getCRUDMgr().getJsonCrudConfig().setDebug(sCrudKey, isDebug);
+        		
+        		try {
+    				RestApiUtil.processHttpResp(
+    						response, 
+    						HttpServletResponse.SC_OK, 
+    						default_content_type, 
+    						getDebugInfo().toString());
+    			} catch (IOException e) {
+    				throw new ServletException(e);
+    			}
+        	}
+        	else
+        	{
+          		processHttpMethods(request, response);
+          	        		
+        	}
     	}
 	}
 
@@ -241,6 +266,24 @@ public class CRUDService extends HttpServlet {
     	json.put("jsoncrud.restapi.version", _VERSION);
     	json.put("jsoncrud.restapi.loglevel", sLoggerLevel);
     	json.put("jsoncrud.framework",JsonCrudRestUtil.getJsonCrudVersion());
+    	return json;
+    }
+    
+    private JSONObject getDebugInfo()
+    {
+    	JSONObject json = new JSONObject();
+    	JsonCrudConfig config = JsonCrudRestUtil.getCRUDMgr().getJsonCrudConfig();
+    	
+		Map<String, String> mapAll = config.getAllConfig();
+    	for(String sCrudKey : config.getConfigCrudKeys())
+    	{
+    		if(sCrudKey.startsWith(JsonCrudConfig._PROP_KEY_CRUD))
+    		{
+	    		boolean isDebug = "true".equalsIgnoreCase(mapAll.get(sCrudKey+"."+JsonCrudConfig._PROP_KEY_DEBUG));
+	        	json.put(sCrudKey+"."+JsonCrudConfig._PROP_KEY_DEBUG, isDebug);
+    		}
+    	}
+    	
     	return json;
     }
     
@@ -360,12 +403,15 @@ public class CRUDService extends HttpServlet {
 				
 				
 				isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
-				if(isDebug && sDebugAccessLog!=null)
+				if(isDebug)
 				{
 					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  echo.attrs:"+crudReq.getEchoJsonAttrs());
 					
-					logger.info(sDebugAccessLog);
-					sDebugAccessLog = null;
+					if(sDebugAccessLog!=null)
+					{
+						logger.info(sDebugAccessLog);
+						sDebugAccessLog = null;
+					}
 				}
 				
 				String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
@@ -1090,5 +1136,19 @@ public class CRUDService extends HttpServlet {
     	return mapPathParams;
     }
     	
+    public static void main(String args[])
+    {
+		String sCrudKey = "";
+		boolean isDebug = false;
+		
+    	Matcher m = pattDebugMode.matcher("http://128:8080/aaa/about/framework/debug/xxx.yyy/true");
+    	if(m.find())
+    	{
+    		sCrudKey = m.group(1);
+    		isDebug = "true".equalsIgnoreCase(m.group(2));
+    	}
+  		System.out.println("sCrudKey:"+sCrudKey);
+		System.out.println("isDebug:"+isDebug);
+  }
     	
 }
