@@ -211,15 +211,18 @@ public class CRUDService extends HttpServlet {
     	}
      	else
     	{
+     		boolean isDebugInfo = GET.equals(sHttpMethod) && sPath.startsWith("/about/framework/debug");
      		
-        	Matcher m = pattDebugMode.matcher(sPath);
-        	if(m.find())
-        	{
-        		String sCrudKey = m.group(1);
-        		boolean isDebug = "true".equalsIgnoreCase(m.group(2));
-        		
-        		JsonCrudRestUtil.getCRUDMgr().getJsonCrudConfig().setDebug(sCrudKey, isDebug);
-        		
+     		if(isDebugInfo)
+     		{
+	        	Matcher m = pattDebugMode.matcher(sPath);
+	        	if(m.find())
+	        	{
+	        		String sCrudKey = m.group(1);
+	        		boolean isDebug = "true".equalsIgnoreCase(m.group(2));
+	        		
+	        		JsonCrudRestUtil.getCRUDMgr().getJsonCrudConfig().setDebug(sCrudKey, isDebug);
+	        	}
         		try {
     				RestApiUtil.processHttpResp(
     						response, 
@@ -229,7 +232,7 @@ public class CRUDService extends HttpServlet {
     			} catch (IOException e) {
     				throw new ServletException(e);
     			}
-        	}
+     		}
         	else
         	{
           		processHttpMethods(request, response);
