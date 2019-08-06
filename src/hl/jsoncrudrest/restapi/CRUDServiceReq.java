@@ -32,6 +32,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 	
 	private long fetchlimit					= 0;
 	private boolean isSkipJsonCrudDbProcess	= false;
+	private boolean isDebug					= false;
 	//
 	
 	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap) throws JsonCrudException
@@ -341,6 +342,14 @@ public class CRUDServiceReq extends RESTServiceReq {
 		return this.fetchlimit;
 	}
 	
+	public boolean isDebug() {
+		return isDebug;
+	}
+
+	public void setDebug(boolean isDebug) {
+		this.isDebug = isDebug;
+	}
+
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer();

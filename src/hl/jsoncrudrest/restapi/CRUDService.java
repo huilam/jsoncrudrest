@@ -392,6 +392,8 @@ public class CRUDService extends HttpServlet {
 			}
 		}
 		
+		isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
+		
 		if(mapCrudConfig!=null)
 		{			
 			ICRUDServicePlugin plugin = null;
@@ -403,9 +405,8 @@ public class CRUDService extends HttpServlet {
 				crudReq.setReqUniqueID(sReqUniqueID);
 				crudReq.setCrudKey(sCrudKey);
 				crudReq.addUrlPathParam(mapPathParams);
+				crudReq.setDebug(isDebug);
 				
-				
-				isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
 				if(isDebug)
 				{
 					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  echo.attrs:"+crudReq.getEchoJsonAttrs());
@@ -464,23 +465,19 @@ public class CRUDService extends HttpServlet {
 				long lStart = System.currentTimeMillis();
 				if(isDebug)
 				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" preProcess.start - plugin:"+plugin.getClass().getSimpleName());
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.start");
 				}
 				crudReq = preProcess(plugin, crudReq);
 				jsonProfiling.put("preProcess",System.currentTimeMillis()-lStart);
 				if(isDebug)
 				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" preProcess.end - plugin:"+plugin.getClass().getSimpleName());
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.end");
 				}
 				
 				HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
 				
 				if(proxyHttpReq!=null)
 				{
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" proxy response - status:"+proxyHttpReq.getHttp_status()+" content:"+proxyHttpReq.getContent_data());
-					}
 					httpReq = proxyHttpReq;
 				}
 				else
@@ -609,13 +606,13 @@ public class CRUDService extends HttpServlet {
 				
 				if(isDebug)
 				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" postProcess.start - plugin:"+plugin.getClass().getSimpleName());
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.start");
 				}
 				httpReq = postProcess(plugin, crudReq, httpReq);
 				jsonProfiling.put("postProcess",System.currentTimeMillis()-lStart);
 				if(isDebug)
 				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" postProcess.end - plugin:"+plugin.getClass().getSimpleName());
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - "+(System.currentTimeMillis()-lStart)+"ms");
 				}
 				
 				if(isDebug)
@@ -637,12 +634,12 @@ public class CRUDService extends HttpServlet {
 					
 					if(isDebug)
 					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+" handleException.start - plugin:"+plugin.getClass().getSimpleName());
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.start");
 					}
 					httpReq = handleException(plugin, crudReq, httpReq, e);
 					if(isDebug)
 					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+" handleException.end - plugin:"+plugin.getClass().getSimpleName());
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end");
 					}
 				}
 				catch(JsonCrudException e2)
@@ -804,7 +801,7 @@ public class CRUDService extends HttpServlet {
     private HttpResp forwardToProxy(
     		CRUDServiceReq aCrudReq, HttpResp aHttpResp) throws JsonCrudException
     {
-    	boolean isDebug = JsonCrudRestUtil.isDebugEnabled(aCrudReq.getCrudKey());
+    	boolean isDebug = aCrudReq.isDebug();
     	String sHttpMethod 	= aCrudReq.getHttpMethod().toLowerCase();
     	String sProxyUrlKey = "restapi.proxy."+sHttpMethod+".url";
     	
@@ -1139,19 +1136,9 @@ public class CRUDService extends HttpServlet {
     	return mapPathParams;
     }
     	
+    //**
     public static void main(String args[])
     {
-		String sCrudKey = "";
-		boolean isDebug = false;
-		
-    	Matcher m = pattDebugMode.matcher("http://128:8080/aaa/about/framework/debug/xxx.yyy/true");
-    	if(m.find())
-    	{
-    		sCrudKey = m.group(1);
-    		isDebug = "true".equalsIgnoreCase(m.group(2));
-    	}
-  		System.out.println("sCrudKey:"+sCrudKey);
-		System.out.println("isDebug:"+isDebug);
-  }
+    }
     	
 }
