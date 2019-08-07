@@ -462,16 +462,18 @@ public class CRUDService extends HttpServlet {
 				}
 				//
 				
-				long lStart = System.currentTimeMillis();
+				long lStart 	= System.currentTimeMillis();
+				long lElapsed 	= 0;
 				if(isDebug)
 				{
 					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.start");
 				}
 				crudReq = preProcess(plugin, crudReq);
-				jsonProfiling.put("preProcess",System.currentTimeMillis()-lStart);
+				lElapsed= System.currentTimeMillis()-lStart;
+				jsonProfiling.put("preProcess", lElapsed);
 				if(isDebug)
 				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.end");
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.end- "+lElapsed+"ms");
 				}
 				
 				HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
@@ -609,10 +611,11 @@ public class CRUDService extends HttpServlet {
 					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.start");
 				}
 				httpReq = postProcess(plugin, crudReq, httpReq);
-				jsonProfiling.put("postProcess",System.currentTimeMillis()-lStart);
+				lElapsed= System.currentTimeMillis()-lStart;
+				jsonProfiling.put("postProcess", lElapsed);
 				if(isDebug)
 				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - "+(System.currentTimeMillis()-lStart)+"ms");
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - "+lElapsed+"ms");
 				}
 				
 				if(isDebug)
@@ -631,15 +634,16 @@ public class CRUDService extends HttpServlet {
 				//unhandled error
 				try {
 					e.printStackTrace();
-					
+					long lStart = System.currentTimeMillis();
 					if(isDebug)
 					{
 						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.start");
 					}
 					httpReq = handleException(plugin, crudReq, httpReq, e);
+					long lElapsed= System.currentTimeMillis()-lStart;
 					if(isDebug)
 					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end");
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lElapsed+"ms");
 					}
 				}
 				catch(JsonCrudException e2)
