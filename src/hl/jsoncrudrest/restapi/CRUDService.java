@@ -306,7 +306,16 @@ public class CRUDService extends HttpServlet {
     {
     	String sReqUniqueID = String.valueOf(System.nanoTime());
     	
-    	String sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+" - "+req.getMethod()+" "+req.getRequestURI()+"?"+req.getQueryString();
+    	String sbQuery = req.getQueryString();
+    	
+    	StringBuffer sbUrl = new StringBuffer();
+    	sbUrl.append(req.getRequestURI());
+    	if(sbQuery!=null && sbQuery.trim().length()>0)
+    	{
+    		sbUrl.append("?").append(sbQuery);
+    	}
+    	
+    	String sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+" - "+req.getMethod()+" "+sbUrl.toString();
     	
     	if(logger.isLoggable(Level.FINE))
     	{
@@ -392,7 +401,7 @@ public class CRUDService extends HttpServlet {
 			}
 		}
 		
-		isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
+		isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey) || logger.isLoggable(Level.FINE);
 		
 		if(mapCrudConfig!=null)
 		{			
