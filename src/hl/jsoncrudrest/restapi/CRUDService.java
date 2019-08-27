@@ -66,7 +66,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.5.3 beta";
+	private static String _VERSION = "0.5.4 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -630,12 +630,15 @@ public class CRUDService extends HttpServlet {
 				if(isDebug)
 				{
 					String sContentData = httpReq.getContent_data();
-					JSONObject jsonTemp = new JSONObject(sContentData);
-
-					jsonDebug.put("profiling",jsonProfiling);
-					
-					jsonTemp.put("debug", jsonDebug);
-					httpReq.setContent_data(jsonTemp.toString());
+					if(sContentData!=null)
+					{
+						JSONObject jsonTemp = new JSONObject(sContentData);
+	
+						jsonDebug.put("profiling",jsonProfiling);
+						
+						jsonTemp.put("debug", jsonDebug);
+						httpReq.setContent_data(jsonTemp.toString());
+					}
 				}
 			} 
 			catch (JsonCrudException e) 
