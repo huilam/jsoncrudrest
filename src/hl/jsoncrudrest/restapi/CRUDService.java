@@ -329,8 +329,6 @@ public class CRUDService extends HttpServlet {
     	JSONArray jArrErrors 	= new JSONArray();
     	
     	boolean isDebug 		= false;
-		JSONObject jsonDebug 	= new JSONObject();
-    	JSONObject jsonProfiling= new JSONObject();
 
     	long lGzipThresholdBytes= -1;
     	
@@ -479,7 +477,6 @@ public class CRUDService extends HttpServlet {
 				}
 				crudReq = preProcess(plugin, crudReq);
 				lElapsed= System.currentTimeMillis()-lStart;
-				jsonProfiling.put("preProcess", lElapsed);
 				if(isDebug)
 				{
 					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.end- "+lElapsed+"ms");
@@ -621,25 +618,11 @@ public class CRUDService extends HttpServlet {
 				}
 				httpReq = postProcess(plugin, crudReq, httpReq);
 				lElapsed= System.currentTimeMillis()-lStart;
-				jsonProfiling.put("postProcess", lElapsed);
 				if(isDebug)
 				{
 					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - "+lElapsed+"ms");
 				}
 				
-				if(isDebug)
-				{
-					String sContentData = httpReq.getContent_data();
-					if(sContentData!=null)
-					{
-						JSONObject jsonTemp = new JSONObject(sContentData);
-	
-						jsonDebug.put("profiling",jsonProfiling);
-						
-						jsonTemp.put("debug", jsonDebug);
-						httpReq.setContent_data(jsonTemp.toString());
-					}
-				}
 			} 
 			catch (JsonCrudException e) 
 			{
