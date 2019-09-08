@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import hl.jsoncrud.CRUDMgr;
 import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
+import hl.jsoncrud.JsonCrudExceptionList;
 
 public class CRUDServiceUtil {
 
@@ -86,8 +87,10 @@ public class CRUDServiceUtil {
 		return mapParamVals;
     }
 
-    public static long[] getPaginationStartNFetchSize(Map<String, Map<String, String>> mapQueryParams) throws JsonCrudException
+    public static long[] getPaginationStartNFetchSize(Map<String, Map<String, String>> mapQueryParams) throws JsonCrudExceptionList
     {
+    	JsonCrudExceptionList exList = new JsonCrudExceptionList();
+    	
     	if(mapQueryParams==null)
     		return new long[] {0,0};
     	
@@ -109,7 +112,7 @@ public class CRUDServiceUtil {
 					JsonCrudException e = new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
 							"Invalid "+_QPARAM_PAGINATION+" value !");
 					e.setErrorSubject(JsonCrudConfig._LIST_START+":"+sFetchStartFrom);
-					throw e;
+					exList.addException(e);
 				}
 			}
 			//
@@ -124,9 +127,14 @@ public class CRUDServiceUtil {
 					JsonCrudException e = new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_PAGINATION, 
 							"Invalid "+_QPARAM_PAGINATION+" value !");
 					e.setErrorSubject(JsonCrudConfig._LIST_FETCHSIZE+":"+sFetchSize);
-					throw e;
+					exList.addException(e);
 				}
 			}
+		}
+		
+		if(exList.hasExceptions())
+		{
+			throw exList;
 		}
 		
 		return new long[] {iFetchStartFrom, iFetchSize};
@@ -170,8 +178,10 @@ public class CRUDServiceUtil {
     	return listReturn;
     }
 
-    public static List<String> getSorting(Map<String, Map<String, String>> mapQueryParams) throws JsonCrudException
+    public static List<String> getSorting(Map<String, Map<String, String>> mapQueryParams) throws JsonCrudExceptionList
     {
+    	JsonCrudExceptionList exList = new JsonCrudExceptionList();
+    	
     	Map<String, String> mapSorting = mapQueryParams.get(_QPARAM_SORTING);
     	
     	if(mapSorting==null)
@@ -195,7 +205,8 @@ public class CRUDServiceUtil {
 	    				JsonCrudException e = new JsonCrudException(JsonCrudConfig.ERRCODE_INVALID_SORTING, 
 								"Invalid "+_QPARAM_SORTING+" value ! ");
 	    				e.setErrorSubject(sSortField+":"+sSortDir);
-	    				throw e;
+	    				exList.addException(e);
+	    				continue;
 	    			}	    			
 
 	    			sSortField = sSortField + "."+sSortDir;
@@ -203,6 +214,9 @@ public class CRUDServiceUtil {
 	    		
 	    		listSortFields.add(sSortField);
 	    	}
+	    	
+	    	if(exList.hasExceptions())
+	    		throw exList;
     	}
     	return listSortFields;
     }

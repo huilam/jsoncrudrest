@@ -11,6 +11,7 @@ import hl.jsoncrud.CRUDMgr;
 import hl.jsoncrud.DBColMeta;
 import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
+import hl.jsoncrud.JsonCrudExceptionList;
 import hl.jsoncrud.JsonCrudRestUtil;
 import hl.restapi.service.RESTApiUtil;
 import hl.restapi.service.RESTServiceReq;
@@ -35,7 +36,7 @@ public class CRUDServiceReq extends RESTServiceReq {
 	private boolean isDebug					= false;
 	//
 	
-	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap) throws JsonCrudException
+	public CRUDServiceReq(HttpServletRequest aReq, Map<String, String> aCrudConfigMap) throws JsonCrudExceptionList
 	{
 		super(aReq, aCrudConfigMap);
 		init(aReq, aCrudConfigMap);
@@ -48,12 +49,18 @@ public class CRUDServiceReq extends RESTServiceReq {
 		return aConfigValue.trim().split(aSeparator);
 	}
 	
-	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig) throws JsonCrudException
+	private void init(HttpServletRequest aReq, Map<String, String> aMapCrudConfig) throws JsonCrudExceptionList
 	{
+		JsonCrudExceptionList exceptionList = new JsonCrudExceptionList();
+		
 		addToConfigMap(aMapCrudConfig);
 		Map<String, Map<String, String>> mapQueryParams = CRUDServiceUtil.getQueryParamsMap(aReq);
 		jsonFilters = CRUDServiceUtil.getFilters(mapQueryParams);		
-		listSorting = CRUDServiceUtil.getSorting(mapQueryParams);
+		try {
+			listSorting = CRUDServiceUtil.getSorting(mapQueryParams);
+		} catch (JsonCrudExceptionList e) {
+			exceptionList.addExceptionList(e);
+		}
 		listReturns = CRUDServiceUtil.getReturns(mapQueryParams);
 		isReturnsExclude = false;
 		if(listReturns==null)
@@ -65,9 +72,14 @@ public class CRUDServiceReq extends RESTServiceReq {
 			}
 		}
 		
-		long[] lStartNFetchSize = CRUDServiceUtil.getPaginationStartNFetchSize(mapQueryParams);
-		this.pagination_startfrom = lStartNFetchSize[0];
-		this.pagination_fetchsize = lStartNFetchSize[1];
+		long[] lStartNFetchSize = null;
+		try {
+			lStartNFetchSize = CRUDServiceUtil.getPaginationStartNFetchSize(mapQueryParams);
+			this.pagination_startfrom = lStartNFetchSize[0];
+			this.pagination_fetchsize = lStartNFetchSize[1];
+		} catch (JsonCrudExceptionList e) {
+			exceptionList.addExceptionList(e);
+		}
 		
 		Map<String, String> mapConfig = getConfigMap();
 		//////////
@@ -175,6 +187,10 @@ public class CRUDServiceReq extends RESTServiceReq {
 			this.jsonEchoAttrs = RESTApiUtil.extractEchoAttrs(aReq, this.reqInputContentData, sJsonAttrEchoPrefix);
 		}
 		//
+		
+		if(exceptionList.hasExceptions())
+			throw exceptionList;
+		
 	}
 	///
 	
