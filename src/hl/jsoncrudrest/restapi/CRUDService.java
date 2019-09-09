@@ -629,37 +629,43 @@ public class CRUDService extends HttpServlet {
 				catch (JsonCrudException e) 
 				{
 					JsonCrudExceptionList errList = new JsonCrudExceptionList();
-					
-					long lStart = System.currentTimeMillis();
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.start");
-					}
-					try {
-						httpReq = handleException(plugin, crudReq, httpReq, e);
-					} catch (JsonCrudException e1) {
-						errList.addException(e1);
-					}
-					long lElapsed= System.currentTimeMillis()-lStart;
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lElapsed+"ms");
-					}
-					
-					if(errList.hasExceptions())
-						throw errList;
-					
+					errList.addException(e);
+					throw errList;
 				}
 			}
 			catch (JsonCrudExceptionList eList) 
 			{
 				//unhandled error
+				JsonCrudExceptionList handledErrList = new JsonCrudExceptionList();
+				
+				long lStart = System.currentTimeMillis();
+				if(isDebug)
+				{
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.start - totalException:"+eList.getAllExceptions().size());
+				}
 				for(JsonCrudException e : eList.getAllExceptions())
+				{
+					try {
+						httpReq = handleException(plugin, crudReq, httpReq, e);
+					} catch (JsonCrudException e1) {
+						handledErrList.addException(e1);
+					}
+				}
+				long lElapsed= System.currentTimeMillis()-lStart;
+				if(isDebug)
+				{
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lElapsed+"ms");
+				}
+				
+				
+				//Accumulate
+				for(JsonCrudException e : handledErrList.getAllExceptions())
 				{
 					JSONObject jsonEx = new JSONObject();
 					jsonEx.put(e.getErrorCode(), e.getErrorMsg());
 					jArrErrors.put(jsonEx);
 				}
+
 			}
 			
 			String sContentData = httpReq.getContent_data();
