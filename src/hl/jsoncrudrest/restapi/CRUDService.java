@@ -668,67 +668,71 @@ public class CRUDService extends HttpServlet {
 
 			}
 			
-			String sContentData = httpReq.getContent_data();
-			if(sContentData==null)
-				sContentData = "";
+			boolean isBinary = httpReq.isBytesContent();
 			
-			boolean isError = (jArrErrors.length()>0) || (sContentData.indexOf("\"errors\":")>-1);
-			
-			if(isError)
+			if(!isBinary)
 			{
-				sContentData = httpReq.getContent_data();
-				if(sContentData==null || sContentData.trim().length()==0)
-					sContentData = "{}";
+				String sContentData = httpReq.getContent_data();
+				if(sContentData==null)
+					sContentData = "";
 				
-				jsonResult = new JSONObject(sContentData);
+				boolean isError = (jArrErrors.length()>0) || (sContentData.indexOf("\"errors\":")>-1);
 				
-				if(jsonResult.has("errors"))
+				if(isError)
 				{
-					if(jsonResult.get("errors") instanceof JSONArray)
+					sContentData = httpReq.getContent_data();
+					if(sContentData==null || sContentData.trim().length()==0)
+						sContentData = "{}";
+					
+					jsonResult = new JSONObject(sContentData);
+					
+					if(jsonResult.has("errors"))
 					{
-						JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
-						for(int i=0; i<jArrErrsFromPlugin.length(); i++)
+						if(jsonResult.get("errors") instanceof JSONArray)
 						{
-							jArrErrors.put(jArrErrsFromPlugin.getJSONObject(i));
+							JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
+							for(int i=0; i<jArrErrsFromPlugin.length(); i++)
+							{
+								jArrErrors.put(jArrErrsFromPlugin.getJSONObject(i));
+							}
 						}
+					}
+					
+					if(jArrErrors.length()>0)
+					{
+						jsonResult.put("errors", jArrErrors);
+						httpReq.setContent_type(TYPE_APP_JSON);
+						httpReq.setContent_data(jsonResult.toString());
+						httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
 					}
 				}
 				
-				if(jArrErrors.length()>0)
+				//Kepo method, in case lulu forgot to set content type
+				String sContentType = httpReq.getContent_type();
+				if("".equalsIgnoreCase(sContentType))
 				{
-					jsonResult.put("errors", jArrErrors);
-					httpReq.setContent_type(TYPE_APP_JSON);
-					httpReq.setContent_data(jsonResult.toString());
-					httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
+					if(sContentData!=null && sContentData.length()>0)
+					{
+						sContentData = sContentData.trim();
+						if(sContentData.startsWith("{") && sContentData.endsWith("}"))
+						{
+							httpReq.setContent_type(TYPE_APP_JSON);
+						}
+						else
+						{
+							httpReq.setContent_type(default_content_type);
+						}
+					}
 				}
+				//
 			}
 			
 		}
 		
 		try {
 			
-			//Kepo method, in case lulu forgot to set content type
-			String sContentType = httpReq.getContent_type();
-			if(sContentType==null || "".equalsIgnoreCase(sContentType))
-			{
-				String sContentData = httpReq.getContent_data();
-				if(sContentData!=null && sContentData.length()>0)
-				{
-					sContentData = sContentData.trim();
-					if(sContentData.startsWith("{") && sContentData.endsWith("}"))
-					{
-						httpReq.setContent_type(TYPE_APP_JSON);
-					}
-					else
-					{
-						httpReq.setContent_type(default_content_type);
-					}
-				}
-			}
-			//
-			
 			RestApiUtil.processHttpResp(
-					res, httpReq.getHttp_status(), httpReq.getContent_type(), httpReq.getContent_data(),
+					res, httpReq,
 					lGzipThresholdBytes);
 		} catch (IOException ex) {
 			throw new ServletException(ex.getClass().getSimpleName(), ex);
