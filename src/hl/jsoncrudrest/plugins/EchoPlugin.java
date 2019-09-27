@@ -34,12 +34,21 @@ public class EchoPlugin implements ICRUDServicePlugin {
 		System.out.println("[ "+this.getClass().getSimpleName()+".postProcess ]");
 		System.out.println("httpStatus="+aHttpResp.getHttp_status());
 		System.out.println("httpStatusMsg="+aHttpResp.getHttp_status_message());
+		
 		System.out.println("contentType="+aHttpResp.getContent_type());
-		System.out.println("contentData="+aHttpResp.getContent_data());
+		if(aHttpResp.isStringContent())
+		{
+			System.out.println("contentData="+aHttpResp.getContent_data());
+		}
+		else
+		{
+			System.out.println("contentData="+aHttpResp.getContent_data().substring(100)+"...");
+		}
 		System.out.println();
 		
 		JSONObject json = new JSONObject();
 		json.put("echo-text", aCrudReq.getUrlPathParam("echo-text"));
+		aHttpResp.setContent_type("application/json");
 		aHttpResp.setContent_data(json.toString());
 		return aHttpResp;
 	}
