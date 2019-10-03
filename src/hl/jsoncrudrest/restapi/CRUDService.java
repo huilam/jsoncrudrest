@@ -407,7 +407,8 @@ public class CRUDService extends HttpServlet {
 		{			
 			if("true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_SERVE_STATICWEB)))
 			{
-				RestApiUtil.serveStaticWeb(req, res);
+				if(RestApiUtil.serveStaticWeb(req, res))
+					return;
 			}
 			
 			ICRUDServicePlugin plugin = null;
