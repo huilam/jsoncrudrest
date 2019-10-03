@@ -181,6 +181,9 @@ public class CRUDService extends HttpServlet {
     	if(sPath==null)
     		sPath = "";
     	
+    	if(sPath.endsWith("/"))
+    		sPath = sPath.substring(0, sPath.length()-1);
+    	
     	boolean isAbout = GET.equals(sHttpMethod) && sPath.equals("/about/framework");
     	
     	if(isAbout)
