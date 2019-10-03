@@ -48,6 +48,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _RESTAPI_RESULT_ONLY	= "restapi.result.only";	
 	protected static String _RESTAPI_MAPPED_URL		= "restapi.mapped.url";	
 	protected static String _RESTAPI_GZIP_THRESHOLD = "restapi.gzip.threshold.bytes";	
+	protected static String _RESTAPI_SERVE_STATICWEB= "restapi.static.web";	
 	
 	protected static String _RESTAPI_DEF_PAGINATION_START 		= "restapi.default.pagination.start";
 	protected static String _RESTAPI_DEF_PAGINATION_FETCHSIZE 	= "restapi.default.pagination.fetchsize";
@@ -404,6 +405,11 @@ public class CRUDService extends HttpServlet {
 		
 		if(mapCrudConfig!=null)
 		{			
+			if("true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_SERVE_STATICWEB)))
+			{
+				RestApiUtil.serveStaticWeb(req, res);
+			}
+			
 			ICRUDServicePlugin plugin = null;
 				//
 			try {
