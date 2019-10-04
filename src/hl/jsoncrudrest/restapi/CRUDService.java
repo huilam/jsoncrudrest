@@ -1,5 +1,6 @@
 package hl.jsoncrudrest.restapi;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
@@ -339,6 +340,15 @@ public class CRUDService extends HttpServlet {
     	
     	if(sPathInfo==null)
     		sPathInfo = "";
+
+    	File file = RestApiUtil.getWebContentAsFile(req);
+    	if(file!=null)
+    	{
+    		int iPos = sPathInfo.lastIndexOf("/");
+    		sPathInfo = sPathInfo.substring(0, iPos);
+    		System.out.println(sPathInfo);
+    	}
+    	
     	
     	if(req.getCharacterEncoding()==null || req.getCharacterEncoding().trim().length()==0)
     	{
