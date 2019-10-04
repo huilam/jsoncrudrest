@@ -346,7 +346,6 @@ public class CRUDService extends HttpServlet {
     	{
     		int iPos = sPathInfo.lastIndexOf("/");
     		sPathInfo = sPathInfo.substring(0, iPos);
-    		System.out.println(sPathInfo);
     	}
     	
     	
