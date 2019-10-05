@@ -369,34 +369,49 @@ public class CRUDService extends HttpServlet {
     	sPathInfo = appendSuffix(sPathInfo, "/");
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
+
+    	boolean isWebContent = RestApiUtil.getWebContentAsFile(req)!=null?true:false;
+    	int iUrlSeg = sPaths.length;
 		
 		String sCrudKey = null;
 		
-		//
-		Map<String, String> mapMappedUrl = mapMappedUrlCrudkey.get(sPaths.length);
-		if(mapMappedUrl!=null)
+		while(sCrudKey==null && iUrlSeg>0)
 		{
-			String sConfigUrl = getMatchingConfigUrl(mapMappedUrl, sPaths);
-			if(sConfigUrl!=null)
+			//
+			Map<String, String> mapMappedUrl = mapMappedUrlCrudkey.get(iUrlSeg);
+			if(mapMappedUrl!=null)
 			{
-				mapPathParams = getPathParamMap(req, sConfigUrl);
-				sCrudKey = mapMappedUrl.get(sConfigUrl);
-			}
-		}
-		
-		if(sCrudKey==null)
-		{
-			Map<String, String> mapAutoUrl = mapAutoUrlCrudkey.get(sPaths.length);
-			if(mapAutoUrl!=null)
-			{
-				String sConfigUrl = getMatchingConfigUrl(mapAutoUrl, sPaths);
+				String sConfigUrl = getMatchingConfigUrl(mapMappedUrl, sPaths);
 				if(sConfigUrl!=null)
 				{
 					mapPathParams = getPathParamMap(req, sConfigUrl);
-					sCrudKey = mapAutoUrl.get(sConfigUrl);
-					
-					isFilterById = (sPaths.length == 2);
+					sCrudKey = mapMappedUrl.get(sConfigUrl);
 				}
+			}
+			//
+			if(sCrudKey==null)
+			{
+				Map<String, String> mapAutoUrl = mapAutoUrlCrudkey.get(iUrlSeg);
+				if(mapAutoUrl!=null)
+				{
+					String sConfigUrl = getMatchingConfigUrl(mapAutoUrl, sPaths);
+					if(sConfigUrl!=null)
+					{
+						mapPathParams = getPathParamMap(req, sConfigUrl);
+						sCrudKey = mapAutoUrl.get(sConfigUrl);
+						
+						isFilterById = (sPaths.length == 2);
+					}
+				}
+			}
+			//
+			if(isWebContent)
+			{
+				iUrlSeg--;
+			}
+			else
+			{
+				break;
 			}
 		}
 		
