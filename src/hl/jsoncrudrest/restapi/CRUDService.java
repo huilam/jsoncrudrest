@@ -342,11 +342,7 @@ public class CRUDService extends HttpServlet {
     		sPathInfo = "";
 
     	File file = RestApiUtil.getWebContentAsFile(req);
-    	if(file!=null)
-    	{
-    		int iPos = sPathInfo.lastIndexOf("/");
-    		sPathInfo = sPathInfo.substring(0, iPos);
-    	}
+    	boolean isWebContent = file!=null?true:false;
     	
     	
     	if(req.getCharacterEncoding()==null || req.getCharacterEncoding().trim().length()==0)
@@ -370,7 +366,6 @@ public class CRUDService extends HttpServlet {
     	
 		String[] sPaths = CRUDServiceUtil.getUrlSegments(sPathInfo);
 
-    	boolean isWebContent = RestApiUtil.getWebContentAsFile(req)!=null?true:false;
     	int iUrlSeg = sPaths.length;
 		
 		String sCrudKey = null;
