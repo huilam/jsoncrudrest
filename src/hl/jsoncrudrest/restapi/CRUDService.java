@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,7 +71,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.5.4 beta";
+	private static String _VERSION = "0.5.5 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -867,6 +869,7 @@ public class CRUDService extends HttpServlet {
     	
     	if(sProxyUrl!=null && sProxyUrl.trim().length()>0)
     	{
+
     		StringBuffer sbApiUrl = new StringBuffer();
     		
     		if(sProxyUrl.indexOf("://")==-1) //-- http://  https://   ws://   wss://
@@ -927,7 +930,13 @@ public class CRUDService extends HttpServlet {
   				sReturnParamName = CRUDServiceUtil._QPARAM_RETURNS_EXCLUDE;
   			}
   			sbApiUrl.append(constructJsonCrudParamUrl(sReturnParamName, aCrudReq.getCrudReturns()));
-    		
+  			
+  			JSONObject jsonPagination = new JSONObject();
+ 			jsonPagination.put(_PAGINATION_STARTFROM, aCrudReq.getPaginationStartFrom());
+  			jsonPagination.put(_PAGINATION_FETCHSIZE, aCrudReq.getPaginationFetchSize());
+  			sbApiUrl.append(constructJsonCrudParamUrl(CRUDServiceUtil._QPARAM_PAGINATION, jsonPagination));
+  			
+  			
     		//Adding custom Query String
     		List<String> listProcessedParamName = CRUDServiceUtil.reservedParamsList;
     		for(String sParamName : req.getParameterMap().keySet())
