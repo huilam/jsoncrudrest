@@ -10,7 +10,6 @@ import org.json.JSONObject;
 import hl.jsoncrud.CRUDMgr;
 import hl.jsoncrud.DBColMeta;
 import hl.jsoncrud.JsonCrudConfig;
-import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudExceptionList;
 import hl.jsoncrud.JsonCrudRestUtil;
 import hl.restapi.service.RESTApiUtil;

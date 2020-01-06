@@ -50,8 +50,13 @@ public class CRUDServiceUtil {
 
     protected static Map<String, Map<String,String>> getQueryParamsMap(HttpServletRequest req)
     {
+		return getQueryParamsMap(req.getQueryString());	
+    }
+    
+    protected static Map<String, Map<String,String>> getQueryParamsMap(String aQueryString)
+    {
     	Map<String, Map<String,String>> mapQueryParams = new LinkedHashMap<String, Map<String,String>>();
-    	String sQueryString = req.getQueryString();;
+    	String sQueryString = aQueryString;
     	if(sQueryString!=null)
     	{
 			for(String sQueryParam : sQueryString.split(QPARAM_SEPARATOR))

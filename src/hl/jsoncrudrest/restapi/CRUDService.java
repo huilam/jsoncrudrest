@@ -870,6 +870,83 @@ public class CRUDService extends HttpServlet {
     	if(sProxyUrl!=null && sProxyUrl.trim().length()>0)
     	{
 
+    		int iPos = sProxyUrl.indexOf("?");
+    		
+			if(iPos>-1)
+			{    				
+
+				String sProxyQuery = sProxyUrl.substring(iPos+1);
+				
+				System.out.println("[proxy] url.getQuery()="+sProxyQuery);
+				
+				if(sProxyQuery!=null && sProxyQuery.length()>0)
+				{
+					sProxyUrl = sProxyUrl.substring(0, iPos);
+					System.out.println("[proxy] sProxyUrl="+sProxyUrl);
+					
+					Map<String, Map<String,String>> mapParams = CRUDServiceUtil.getQueryParamsMap(sProxyQuery);
+					
+					//
+					JSONObject jsonFilters = CRUDServiceUtil.getFilters(mapParams);
+					for(String sKey : jsonFilters.keySet())
+					{
+						aCrudReq.addCrudFilter(sKey, jsonFilters.get(sKey));
+					}
+					
+					//
+					try {
+						List<String> listSorting = CRUDServiceUtil.getSorting(mapParams);
+						
+						if(listSorting!=null && listSorting.size()>0)
+						{
+							for(int i=0; i<listSorting.size(); i++)
+							{
+								aCrudReq.addCrudSorting(listSorting.get(i));
+							}
+						}
+					} catch (JsonCrudExceptionList e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+
+					//
+					List<String> listReturns = CRUDServiceUtil.getReturns(mapParams);
+					if(listReturns==null)
+					{
+						listReturns = CRUDServiceUtil.getReturnsExclude(mapParams);
+					}
+					
+					if(listReturns!=null && listReturns.size()>0)
+					{
+						for(int i=0; i<listReturns.size(); i++)
+						{
+							aCrudReq.addCrudReturns(listReturns.get(i));
+						}
+					}
+					
+					//
+					try {
+						long lPagination[] = CRUDServiceUtil.getPaginationStartNFetchSize(mapParams);
+						
+						if(lPagination.length==2)
+						{
+							if(lPagination[0]!=0)
+							{
+								aCrudReq.setPaginationStartFrom(lPagination[0]);
+							}
+							
+							if(lPagination[1]!=0)
+							{
+								aCrudReq.setPaginationFetchSize(lPagination[1]);
+							}
+						}
+						
+					} catch (JsonCrudExceptionList e) {
+						e.printStackTrace();
+					}
+				}
+			}
+    		
     		StringBuffer sbApiUrl = new StringBuffer();
     		
     		if(sProxyUrl.indexOf("://")==-1) //-- http://  https://   ws://   wss://
