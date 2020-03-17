@@ -1,7 +1,9 @@
 package hl.jsoncrudrest.restapi;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -191,7 +193,42 @@ public class CRUDService extends HttpServlet {
     	
     	if(isAbout)
     	{
-    		if(sPath.startsWith("/about/framework/loglevel/"))
+    		JSONObject jsonAbout = getAbout();
+    		
+    		if(sPath.startsWith("/about/framework/sysinfo/"))
+    		{
+    			JSONObject jsonSysInfo = new JSONObject();
+
+    			//System Env
+    			JSONObject jsonTmp = new JSONObject();
+    			Map<String, String> mapEnv = System.getenv();
+    			for(String sKey : mapEnv.keySet())
+    			{
+    				jsonTmp.put(sKey , mapEnv.get(sKey));
+    			}
+    			jsonSysInfo.put("Environment", jsonTmp);
+    			
+    			//System Prop
+    			jsonTmp = new JSONObject();
+    			Map<Object, Object> mapProp = System.getProperties();
+    			for(Object oKey : mapProp.keySet())
+    			{
+    				jsonTmp.put(oKey.toString() , mapProp.get(oKey));
+    			}
+    			jsonSysInfo.put("Properties", jsonTmp);
+    			
+    			//Docker 
+    			//docker --version
+    			String sDockerVersion = execShell("docker --version");
+    			if(sDockerVersion!=null && sDockerVersion.trim().length()>0)
+    			{
+    				jsonSysInfo.put("docker.version", sDockerVersion);
+    			}
+    			
+    			jsonAbout.put("SysInfo", jsonSysInfo);
+    		}
+    		
+    		else if(sPath.startsWith("/about/framework/loglevel/"))
     		{
     			if(sPath.endsWith("/DEBUG"))
     			{
@@ -212,7 +249,7 @@ public class CRUDService extends HttpServlet {
 						response, 
 						HttpServletResponse.SC_OK, 
 						default_content_type, 
-						getAbout().toString());
+						jsonAbout.toString());
 			} catch (IOException e) {
 				throw new ServletException(e);
 			}
@@ -248,6 +285,42 @@ public class CRUDService extends HttpServlet {
         	}
     	}
 	}
+    
+    private static String execShell(final String aCmdStr)
+    {
+    	StringBuffer sb = new StringBuffer();
+    	BufferedReader input = null;
+    	try {  
+    	      String line = null;  
+    	      Process p = Runtime.getRuntime().exec(aCmdStr);  
+    	      input =  new BufferedReader(new InputStreamReader(p.getInputStream()));  
+    	      while ((line = input.readLine()) != null) 
+    	      {  
+    	    	  sb.append(line);
+    	    	  //System.out.println(line);  
+    	      }  
+    	      input.close();  
+    	} 
+    	catch (IOException e) 
+    	{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+    	finally
+    	{
+    		if(input!=null)
+    		{
+    			try {
+					input.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    		}
+    	}
+    	return sb.toString();
+    }
 
     @Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException {
