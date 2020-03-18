@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +28,7 @@ import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudExceptionList;
 import hl.jsoncrud.JsonCrudRestUtil;
+import hl.os.SystemInfo;
 import hl.restapi.service.RESTApiUtil;
 import hl.common.http.HttpResp;
 import hl.common.http.RestApiUtil;
@@ -73,7 +72,7 @@ public class CRUDService extends HttpServlet {
 	protected static String _PAGINATION_RESULT_SECTION 	= JsonCrudConfig._LIST_RESULT;
 	protected static String _PAGINATION_META_SECTION 	= JsonCrudConfig._LIST_META;	
 	
-	private static String _VERSION = "0.5.5 beta";
+	private static String _VERSION = "0.5.6 beta";
 		
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
@@ -189,15 +188,15 @@ public class CRUDService extends HttpServlet {
     	if(sPath.endsWith("/"))
     		sPath = sPath.substring(0, sPath.length()-1);
     	
-    	boolean isAbout = GET.equals(sHttpMethod) && sPath.equals("/about/framework");
+    	boolean isAbout = GET.equals(sHttpMethod) && sPath.startsWith("/about/framework");
     	
     	if(isAbout)
     	{
     		JSONObject jsonAbout = getAbout();
     		
-    		if(sPath.startsWith("/about/framework/sysinfo/"))
+    		if(sPath.equals("/about/framework/sysinfo"))
     		{
-    			JSONObject jsonSysInfo = new JSONObject();
+    			JSONObject jsonSysInfo = SystemInfo.getJson();
 
     			//System Env
     			JSONObject jsonTmp = new JSONObject();
@@ -206,7 +205,7 @@ public class CRUDService extends HttpServlet {
     			{
     				jsonTmp.put(sKey , mapEnv.get(sKey));
     			}
-    			jsonSysInfo.put("Environment", jsonTmp);
+    			jsonSysInfo.put("environment", jsonTmp);
     			
     			//System Prop
     			jsonTmp = new JSONObject();
@@ -215,15 +214,22 @@ public class CRUDService extends HttpServlet {
     			{
     				jsonTmp.put(oKey.toString() , mapProp.get(oKey));
     			}
-    			jsonSysInfo.put("Properties", jsonTmp);
+    			jsonSysInfo.put("properties", jsonTmp);
     			
     			//Docker 
     			//docker --version
+    			JSONObject jsonDocker = new JSONObject();
     			String sDockerVersion = execShell("docker --version");
     			if(sDockerVersion!=null && sDockerVersion.trim().length()>0)
     			{
-    				jsonSysInfo.put("docker.version", sDockerVersion);
+    				jsonDocker.put("docker.version", sDockerVersion);
     			}
+    			jsonSysInfo.put("docker", jsonDocker);
+    			
+    			
+    			//local sentinel Neoface-V license session
+    			//http://127.0.0.1:1947/_int_/sessions.html
+    			
     			
     			jsonAbout.put("SysInfo", jsonSysInfo);
     		}
