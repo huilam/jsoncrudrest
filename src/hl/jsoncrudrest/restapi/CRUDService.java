@@ -1,9 +1,7 @@
 package hl.jsoncrudrest.restapi;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -28,10 +26,11 @@ import hl.jsoncrud.JsonCrudConfig;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudExceptionList;
 import hl.jsoncrud.JsonCrudRestUtil;
-import hl.os.SystemInfo;
 import hl.restapi.service.RESTApiUtil;
 import hl.common.http.HttpResp;
 import hl.common.http.RestApiUtil;
+import hl.common.system.CommonInfo;
+import hl.common.system.Windows;
 
 public class CRUDService extends HttpServlet {
 
@@ -195,43 +194,8 @@ public class CRUDService extends HttpServlet {
     		JSONObject jsonAbout = getAbout();
     		
     		if(sPath.equals("/about/framework/sysinfo"))
-    		{
-    			JSONObject jsonSysInfo = SystemInfo.getJson();
-
-    			//System Env
-    			JSONObject jsonTmp = new JSONObject();
-    			Map<String, String> mapEnv = System.getenv();
-    			for(String sKey : mapEnv.keySet())
-    			{
-    				jsonTmp.put(sKey , mapEnv.get(sKey));
-    			}
-    			jsonSysInfo.put("environment", jsonTmp);
-    			
-    			//System Prop
-    			jsonTmp = new JSONObject();
-    			Map<Object, Object> mapProp = System.getProperties();
-    			for(Object oKey : mapProp.keySet())
-    			{
-    				jsonTmp.put(oKey.toString() , mapProp.get(oKey));
-    			}
-    			jsonSysInfo.put("properties", jsonTmp);
-    			
-    			//Docker 
-    			//docker --version
-    			JSONObject jsonDocker = new JSONObject();
-    			String sDockerVersion = execShell("docker --version");
-    			if(sDockerVersion!=null && sDockerVersion.trim().length()>0)
-    			{
-    				jsonDocker.put("docker.version", sDockerVersion);
-    			}
-    			jsonSysInfo.put("docker", jsonDocker);
-    			
-    			
-    			//local sentinel Neoface-V license session
-    			//http://127.0.0.1:1947/_int_/sessions.html
-    			
-    			
-    			jsonAbout.put("SysInfo", jsonSysInfo);
+    		{	
+    			jsonAbout.put("SysInfo", getSysInfoJson());
     		}
     		
     		else if(sPath.startsWith("/about/framework/loglevel/"))
@@ -292,41 +256,25 @@ public class CRUDService extends HttpServlet {
     	}
 	}
     
-    private static String execShell(final String aCmdStr)
+    private static JSONObject getSysInfoJson()
     {
-    	StringBuffer sb = new StringBuffer();
-    	BufferedReader input = null;
-    	try {  
-    	      String line = null;  
-    	      Process p = Runtime.getRuntime().exec(aCmdStr);  
-    	      input =  new BufferedReader(new InputStreamReader(p.getInputStream()));  
-    	      while ((line = input.readLine()) != null) 
-    	      {  
-    	    	  sb.append(line);
-    	    	  //System.out.println(line);  
-    	      }  
-    	      input.close();  
-    	} 
-    	catch (IOException e) 
+    	JSONObject json = new JSONObject();
+    	
+    	JSONObject jsonWin = Windows.getSystemInfo();
+    	if(jsonWin!=null && jsonWin.length()>0)
     	{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
-    	finally
-    	{
-    		if(input!=null)
-    		{
-    			try {
-					input.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-    		}
+    		json.put("windows", jsonWin);
     	}
-    	return sb.toString();
+    	
+    	json.put("jvm", CommonInfo.getJDKInfo());
+    	json.put("storage", CommonInfo.getDiskInfo());
+
+    	json.put("system.environment", CommonInfo.getEnvProperties());
+    	json.put("system.properties", CommonInfo.getSysProperties());
+    	
+    	return json;
     }
+    
 
     @Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException {
@@ -431,7 +379,6 @@ public class CRUDService extends HttpServlet {
     		try {
 				req.setCharacterEncoding("UTF-8");
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				logger.log(Level.FINE, e.getMessage(), e);
 			}
     	}
@@ -984,7 +931,6 @@ public class CRUDService extends HttpServlet {
 							}
 						}
 					} catch (JsonCrudExceptionList e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 
