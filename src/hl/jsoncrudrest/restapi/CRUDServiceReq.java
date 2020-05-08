@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import hl.jsoncrud.CRUDMgr;
 import hl.jsoncrud.DBColMeta;
 import hl.jsoncrud.JsonCrudConfig;
+import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrud.JsonCrudExceptionList;
 import hl.jsoncrud.JsonCrudRestUtil;
 import hl.restapi.service.RESTApiUtil;
@@ -365,6 +366,21 @@ public class CRUDServiceReq extends RESTServiceReq {
 		this.isDebug = isDebug;
 	}
 
+	public long executeSQL(String aSQL, Object[] aObjParams) throws JsonCrudException
+	{
+		return JsonCrudRestUtil.getCRUDMgr().executeSQL(
+				getCrudKey(), 
+				aSQL, aObjParams);
+	}
+	
+	public JSONObject retrieveBySQL(String aSQL, Object[] aObjParams) throws JsonCrudException
+	{
+		return JsonCrudRestUtil.getCRUDMgr().retrieveBySQL(
+				getCrudKey(), 
+				aSQL, aObjParams, 
+				getPaginationStartFrom(), getPaginationFetchSize());
+	}
+	
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer();
