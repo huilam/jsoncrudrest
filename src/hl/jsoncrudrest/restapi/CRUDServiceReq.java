@@ -381,6 +381,13 @@ public class CRUDServiceReq extends RESTServiceReq {
 				getPaginationStartFrom(), getPaginationFetchSize());
 	}
 	
+	public Object cast2DBType(String aAttrName, Object aVal) throws JsonCrudException
+	{
+		return JsonCrudRestUtil.getCRUDMgr().castJson2DBVal(
+				getCrudKey(), 
+				aAttrName, aVal);
+	}
+	
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer();
