@@ -2,12 +2,14 @@ package hl.jsoncrudrest.plugins;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import hl.common.http.HttpResp;
@@ -24,6 +26,12 @@ public class SQLSelectPlugin implements ICRUDServicePlugin {
 		aCrudReq.setSkipJsonCrudDbProcess(true);
 		//
 		HttpServletRequest req  = aCrudReq.getHttpServletReq();
+		
+		if("true".equals(req.getParameter("listquery")))
+		{
+			return aCrudReq;
+		}
+		
 		String sParamSQLName = req.getParameter("sqlname");
 		String sSqlCfgKey = "sqlname."+sParamSQLName+".sql";	
 		String sConfigSQL = aCrudReq.getConfigMap().get(sSqlCfgKey);
@@ -78,27 +86,47 @@ public class SQLSelectPlugin implements ICRUDServicePlugin {
 		try {
 			HttpServletRequest req  = aCrudReq.getHttpServletReq();
 			long lStartTime 		= System.currentTimeMillis();
-			
-			String sConfigSQL = (String) req.getAttribute(aCrudReq.getReqUniqueID()+".sql");
-			@SuppressWarnings("unchecked")
-			List<Object> listParamObjs = (List<Object>) req.getAttribute(aCrudReq.getReqUniqueID()+".param.obj[]");
-			
 			JSONObject json = null;
 			
-			if(sConfigSQL!=null)
+			if("true".equals(req.getParameter("listquery")))
 			{
-				json = aCrudReq.retrieveBySQL(sConfigSQL, 
-						listParamObjs.toArray(new Object[listParamObjs.size()]));
+				Map<String, String> mapConfig = aCrudReq.getConfigMap();
+				json = new JSONObject();
+				JSONArray jarrResult = new JSONArray();
+				Pattern patt = Pattern.compile("^sqlname\\.(.+?)\\.sql");
+				for(String sKey : mapConfig.keySet())
+				{
+					Matcher m = patt.matcher(sKey);
+					if(m.matches())
+					{
+						jarrResult.put(m.group(1));
+					}
+				}
+				json.put("result", jarrResult);			
+			}
+			else
+			{
+				String sConfigSQL = (String) req.getAttribute(aCrudReq.getReqUniqueID()+".sql");
+				@SuppressWarnings("unchecked")
+				List<Object> listParamObjs = (List<Object>) req.getAttribute(aCrudReq.getReqUniqueID()+".param.obj[]");
+				
+				if(sConfigSQL!=null)
+				{
+					json = aCrudReq.retrieveBySQL(sConfigSQL, 
+							listParamObjs.toArray(new Object[listParamObjs.size()]));
+				}
 			}
 			
 			if(json!=null)
 			{
 				JSONObject jsonMeta = json.optJSONObject("meta");
-				if(jsonMeta!=null)
+				if(jsonMeta==null)
 				{
-					jsonMeta.put("elapsed_ms", System.currentTimeMillis() - lStartTime);
-					json.put("meta", jsonMeta);
+					jsonMeta = new JSONObject();
 				}
+				jsonMeta.put("elapsed_ms", System.currentTimeMillis() - lStartTime);
+				json.put("meta", jsonMeta);
+				
 				aHttpResp.setHttp_status(200);
 				aHttpResp.setContent_type("application/json");
 				aHttpResp.setContent_data(json.toString());
