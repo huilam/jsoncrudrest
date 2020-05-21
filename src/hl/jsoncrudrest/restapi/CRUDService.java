@@ -673,7 +673,7 @@ public class CRUDService extends HttpServlet {
 					lElapsed= System.currentTimeMillis()-lStart;
 					if(isDebug)
 					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - "+lElapsed+"ms");
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
 					}
 					
 				}
