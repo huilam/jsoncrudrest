@@ -333,9 +333,10 @@ public class CRUDService extends HttpServlet {
 
     private void processHttpMethods(HttpServletRequest req, HttpServletResponse res) throws ServletException
     {
- //   	String sReqUniqueID = String.valueOf(System.nanoTime());
-    	String sDebugAccessLog = null;
-    	String sbQuery = req.getQueryString();
+    	long lStartTime  		= System.currentTimeMillis();
+    	String sReqUniqueID 	= null;
+    	String sDebugAccessLog 	= null;
+    	String sbQuery 			= req.getQueryString();
     	
     	StringBuffer sbUrl = new StringBuffer();
     	sbUrl.append(req.getRequestURI());
@@ -458,13 +459,13 @@ public class CRUDService extends HttpServlet {
 					crudReq.addUrlPathParam(mapPathParams);
 					crudReq.setDebug(isDebug);
 					
-					String sReqUniqueID = RESTApiUtil.getReqUniqueId(crudReq);
+					sReqUniqueID = RESTApiUtil.getReqUniqueId(crudReq);
 					crudReq.setReqUniqueID(sReqUniqueID);
 			    	
 			    	if(logger.isLoggable(Level.FINE))
 			    	{
-			    	  	sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+" - "+req.getMethod()+" "+sbUrl.toString();
-			    	      		logger.log(Level.FINE, sDebugAccessLog);
+			    	  	sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+".start - "+req.getMethod()+" "+sbUrl.toString();
+			    	    logger.log(Level.FINE, sDebugAccessLog);
 			    		sDebugAccessLog = null;
 			    	}
 			    	
@@ -698,10 +699,10 @@ public class CRUDService extends HttpServlet {
 						handledErrList.addException(e1);
 					}
 				}
-				long lElapsed= System.currentTimeMillis()-lStart;
 				if(isDebug)
 				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lElapsed+"ms");
+					long lPluginElapse= System.currentTimeMillis()-lStart;
+					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lPluginElapse+"ms");
 				}
 				
 				
@@ -783,6 +784,14 @@ public class CRUDService extends HttpServlet {
 					lGzipThresholdBytes);
 		} catch (IOException ex) {
 			throw new ServletException(ex.getClass().getSimpleName(), ex);
+		}
+		
+		
+		if(isDebug)
+		{
+			long lElapsed = System.currentTimeMillis()-lStartTime;
+    	  	sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+".end - "+req.getMethod()+" "+sbUrl.toString()+" - "+lElapsed+"ms";;
+		    logger.log(Level.FINE, sDebugAccessLog);
 		}
     }
     
