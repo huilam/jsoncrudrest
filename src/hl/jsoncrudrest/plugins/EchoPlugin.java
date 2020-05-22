@@ -25,6 +25,7 @@ public class EchoPlugin implements ICRUDServicePlugin {
 		System.out.println("pagination=start:"+aCrudReq.getPaginationStartFrom());
 		System.out.println("pagination=fetchsize:"+aCrudReq.getPaginationFetchSize());
 		System.out.println("fetchlimit="+aCrudReq.getFetchLimit());
+		System.out.println("rid="+aCrudReq.getReqUniqueID());
 		System.out.println();
 		return aCrudReq;
 	}

@@ -333,8 +333,8 @@ public class CRUDService extends HttpServlet {
 
     private void processHttpMethods(HttpServletRequest req, HttpServletResponse res) throws ServletException
     {
-    	String sReqUniqueID = String.valueOf(System.nanoTime());
-    	
+ //   	String sReqUniqueID = String.valueOf(System.nanoTime());
+    	String sDebugAccessLog = null;
     	String sbQuery = req.getQueryString();
     	
     	StringBuffer sbUrl = new StringBuffer();
@@ -342,14 +342,6 @@ public class CRUDService extends HttpServlet {
     	if(sbQuery!=null && sbQuery.trim().length()>0)
     	{
     		sbUrl.append("?").append(sbQuery);
-    	}
-    	
-    	String sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+" - "+req.getMethod()+" "+sbUrl.toString();
-    	
-    	if(logger.isLoggable(Level.FINE))
-    	{
-    		logger.log(Level.FINE, sDebugAccessLog);
-    		sDebugAccessLog = null;
     	}
     	
 		String sPathInfo 		= req.getPathInfo();  //{crudkey}/xx/xx
@@ -462,20 +454,24 @@ public class CRUDService extends HttpServlet {
 					plugin = getPlugin(mapCrudConfig);
 					//
 					crudReq = new CRUDServiceReq(req, mapCrudConfig);
-					crudReq.setReqUniqueID(sReqUniqueID);
 					crudReq.setCrudKey(sCrudKey);
 					crudReq.addUrlPathParam(mapPathParams);
 					crudReq.setDebug(isDebug);
 					
+					String sReqUniqueID = RESTApiUtil.getReqUniqueId(crudReq);
+					crudReq.setReqUniqueID(sReqUniqueID);
+			    	
+			    	if(logger.isLoggable(Level.FINE))
+			    	{
+			    	  	sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+" - "+req.getMethod()+" "+sbUrl.toString();
+			    	      		logger.log(Level.FINE, sDebugAccessLog);
+			    		sDebugAccessLog = null;
+			    	}
+			    	
+					
 					if(isDebug)
 					{
 						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  echo.attrs:"+crudReq.getEchoJsonAttrs());
-						
-						if(sDebugAccessLog!=null)
-						{
-							logger.info(sDebugAccessLog);
-							sDebugAccessLog = null;
-						}
 					}
 					
 					String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
