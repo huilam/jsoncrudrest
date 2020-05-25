@@ -910,9 +910,15 @@ public class CRUDService extends HttpServlet {
 					System.out.println("[proxy] sProxyUrl="+sProxyUrl);
 					
 					Map<String, Map<String,String>> mapParams = CRUDServiceUtil.getQueryParamsMap(sProxyQuery);
+					if(mapParams==null)
+						mapParams = new HashMap<String, Map<String,String>>();
 					
 					//
 					JSONObject jsonFilters = CRUDServiceUtil.getFilters(mapParams);
+					
+					if(jsonFilters==null)
+						jsonFilters = new JSONObject();
+					
 					for(String sKey : jsonFilters.keySet())
 					{
 						aCrudReq.addCrudFilter(sKey, jsonFilters.get(sKey));
@@ -921,6 +927,9 @@ public class CRUDService extends HttpServlet {
 					//
 					try {
 						List<String> listSorting = CRUDServiceUtil.getSorting(mapParams);
+						
+						if(listSorting==null)
+							listSorting = new ArrayList<String>();
 						
 						if(listSorting!=null && listSorting.size()>0)
 						{
