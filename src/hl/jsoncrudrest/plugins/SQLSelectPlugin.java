@@ -33,7 +33,7 @@ public class SQLSelectPlugin implements ICRUDServicePlugin {
 		}
 		
 		String sParamSQLName = req.getParameter("sqlname");
-		String sSqlCfgKey = "sqlname."+sParamSQLName+".sql";	
+		String sSqlCfgKey = "sqlname."+sParamSQLName+".sql";
 		String sConfigSQL = aCrudReq.getConfigMap().get(sSqlCfgKey);
 		
 		if(sConfigSQL!=null)
@@ -94,12 +94,20 @@ public class SQLSelectPlugin implements ICRUDServicePlugin {
 				json = new JSONObject();
 				JSONArray jarrResult = new JSONArray();
 				Pattern patt = Pattern.compile("^sqlname\\.(.+?)\\.sql");
+				JSONObject jsonSqlName = null; 
 				for(String sKey : mapConfig.keySet())
 				{
 					Matcher m = patt.matcher(sKey);
 					if(m.matches())
 					{
-						jarrResult.put(m.group(1));
+						String sSqlName 	= m.group(1);
+						String sSqlDesc 	= aCrudReq.getConfigMap().get("sqlname."+sSqlName+".desc");
+						if(sSqlDesc==null || sSqlDesc.trim().length()==0)
+							sSqlDesc = sSqlName;
+						jsonSqlName = new JSONObject();
+						jsonSqlName.put(sSqlName, sSqlDesc);
+						jarrResult.put(jsonSqlName);
+
 					}
 				}
 				json.put("result", jarrResult);			
