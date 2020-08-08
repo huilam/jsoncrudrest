@@ -25,8 +25,8 @@
  3.1 Filters
    - Syntax : filters=<json-attrname>.<modifier>.<operator>
      <modifier> : not, ci (case insensitive) 
-     <operator> : startwith, endwith, contain, from, to
-   - example : ?filters=jsonfield1.not.contain:xxx,jsonfield2.from:2017,jsonfield3.ci.startwith=AAA
+     <operator> : startwith, endwith, contain, from, to, in
+   - example : ?filters=jsonfield1.not.contain:xxx,jsonfield2.from:2017,jsonfield3.ci.startwith=AAA,jsonfield4.in=a,b,c
    
  3.2 Sorting
    - Syntax : sorting=<json-attrname>.<direction>  
