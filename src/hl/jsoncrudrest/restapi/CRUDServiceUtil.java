@@ -53,7 +53,7 @@ public class CRUDServiceUtil {
 		return getQueryParamsMap(req.getQueryString());	
     }
     
-    protected static Map<String, Map<String,String>> getQueryParamsMap(String aQueryString)
+    public static Map<String, Map<String,String>> getQueryParamsMap(String aQueryString)
     {
     	Map<String, Map<String,String>> mapQueryParams = new LinkedHashMap<String, Map<String,String>>();
     	String sQueryString = aQueryString;
