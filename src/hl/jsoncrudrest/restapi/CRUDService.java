@@ -88,6 +88,7 @@ public class CRUDService extends HttpServlet {
 	
 	private static Pattern pattNumberic = Pattern.compile("[0-9\\.]+");
 	private static Pattern pattDebugMode = Pattern.compile("/about/framework/debug/(.+?)/(true|false)");
+	private static Pattern pattConfig = Pattern.compile("/about/framework/config/(.+)");
 	
 	public CRUDService() {
         super();
@@ -193,7 +194,31 @@ public class CRUDService extends HttpServlet {
     	{
     		JSONObject jsonAbout = getAbout();
     		
-    		if(sPath.startsWith("/about/framework/debug"))
+    		if(sPath.startsWith("/about/framework/config"))
+    		{
+    			Matcher m = pattConfig.matcher(sPath);
+	        	if(m.find())
+	        	{
+	        		String sCrudKey = m.group(1);
+	        		
+	        		if(!sCrudKey.startsWith("crud."))
+	        			sCrudKey = "crud."+sCrudKey;
+	        		
+	        		JsonCrudConfig config = JsonCrudRestUtil.getCRUDMgr().getJsonCrudConfig();
+	        		Map<String, String> mapConfig = config.getConfig(sCrudKey);
+	        		
+	        		JSONObject jsonConfigVals = new JSONObject();
+	        		for(String sKey : mapConfig.keySet())
+	        		{
+	        			jsonConfigVals.put(sKey, mapConfig.get(sKey));
+	        		}
+	        		JSONObject jsonConfig = new JSONObject();
+	        		jsonConfig.put(sCrudKey, jsonConfigVals);
+	        		
+	        		jsonAbout.put("config", jsonConfig);
+	        	}
+    		}
+    		else if(sPath.startsWith("/about/framework/debug"))
     		{
 	        	Matcher m = pattDebugMode.matcher(sPath);
 	        	if(m.find())
