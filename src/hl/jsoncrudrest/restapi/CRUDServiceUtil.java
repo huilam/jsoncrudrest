@@ -56,7 +56,7 @@ public class CRUDServiceUtil {
     public static Map<String, Map<String,String>> getQueryParamsMap(String aQueryString)
     {
     	Map<String, Map<String,String>> mapQueryParams = new LinkedHashMap<String, Map<String,String>>();
-    	String sQueryString = aQueryString;
+    	String sQueryString = urlDecode(aQueryString);
     	if(sQueryString!=null)
     	{
 			for(String sQueryParam : sQueryString.split(QPARAM_SEPARATOR))
