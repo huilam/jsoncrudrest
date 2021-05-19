@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -47,6 +50,8 @@ public class CRUDServiceUtil {
 	
 	public static String QPARAM_MULTIKEY_KEYVALUE_SEPARATOR = ":";
 	public static String QPARAM_MULTIKEY_SEPARATOR 			= ",";
+	
+	public static  Pattern pattInVals = Pattern.compile("(\\.in:.+)(?:,.+?\\:)");
 
     protected static Map<String, Map<String,String>> getQueryParamsMap(HttpServletRequest req)
     {
@@ -251,6 +256,9 @@ public class CRUDServiceUtil {
 
 	private static String urlDecode(String aUrl)
 	{
+		if(aUrl==null)
+			return "";
+		
 		try {
 			return URLDecoder.decode(aUrl, "UTF-8");
 		} catch (Exception e) {
@@ -269,4 +277,77 @@ public class CRUDServiceUtil {
 		
 		return aURL.trim().substring(1).split(URL_SEPARATOR);
 	}
+	
+	
+	private static String replaceInMultiValsComma(final String aInputStr)
+	{
+		if(aInputStr==null || aInputStr.indexOf(".in:")==-1)
+			return aInputStr;
+		
+		int iInPos = 0;
+		
+		String sTmp = "";
+		Matcher m = pattInVals.matcher(aInputStr);
+		
+		while(true)
+		{
+			sTmp = "";
+			
+			if(m.find(iInPos))
+			{
+				sTmp = m.group(1);
+				iInPos = m.end();
+			}
+			else
+			{
+				iInPos = aInputStr.indexOf(".in:", iInPos);
+				if(iInPos>-1)
+				{
+					sTmp = aInputStr.substring(iInPos);
+						
+					int iLastPos = sTmp.lastIndexOf(",");
+					if(iLastPos>-1)
+					{
+						String sTmp2 = sTmp.substring(iLastPos+1);
+						if(sTmp2.matches("[:=]"))
+						{
+							sTmp = sTmp2.substring(0, iLastPos);
+						}
+					}
+				}
+			}
+			
+			if(sTmp.length()>0)
+			{	
+				return aInputStr.replaceAll(sTmp, sTmp.replaceAll(",", ";"));
+			}
+			else
+			{
+				break;
+			}
+		}
+		
+		return aInputStr;
+	}
+	
+	public static void main(String args[]) throws Exception
+	{
+		String sTestURL1 = "xxx.in:111;222,333,alertTimestamp.to:1620785324386";
+		String sTestURL2 = "xxx.in:111;222;333,yyy.in:777;888;000";
+		String sTestURL3 = "xxx.in:111,222,333,yyy.in:777,888,000";
+		String sTestURL4 = "xxx.in:111,222,333";
+		String sTestURL5 = "xxx.in:111,222,333,yyy.from:2";
+				
+		String[] strTest = new String[] {sTestURL1, sTestURL2, sTestURL3, sTestURL4, sTestURL5};
+		
+		for(String sTest : strTest)
+		{
+			
+			System.out.println("1:"+sTest);
+			System.out.println("2:"+replaceInMultiValsComma(sTest));
+			System.out.println();
+		}
+		
+	}
+	
 }
