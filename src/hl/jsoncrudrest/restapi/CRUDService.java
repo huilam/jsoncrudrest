@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -76,6 +77,8 @@ public class CRUDService extends HttpServlet {
 	private Map<Integer, Map<String, String>> mapAutoUrlCrudkey 	= null;
 	private Map<Integer, Map<String, String>> mapMappedUrlCrudkey 	= null;
 	
+	private Map<String, List<String>> mapApiDisabledHttpMethods 	= new HashMap<String, List<String>>();
+	
 	private Map<String, String> mapDefaultConfig 					= null;
 	private String default_content_type								= TYPE_APP_JSON;
 	
@@ -126,8 +129,29 @@ public class CRUDService extends HttpServlet {
 	    		
 	   			Map<String, String> mapConfig = config.getConfig(sKey);
 	   			
-	   			boolean isDisabled = "true".equalsIgnoreCase(mapConfig.get(_RESTAPI_DISABLED));
-	   			if(!isDisabled)
+	   			//Check if disabled HttpMethods : GET, DELETE, UPDATE, POST, TRUE/ALL 
+	   			List<String> listDisabledHttpMethods = mapApiDisabledHttpMethods.get(sKey);
+	   			if(listDisabledHttpMethods==null)
+	   			{
+	   				listDisabledHttpMethods = new ArrayList<String>();
+		   			String sDisabledHttpMethods = mapConfig.get(_RESTAPI_DISABLED);
+		   			if(sDisabledHttpMethods!=null)
+		   			{
+			   			StringTokenizer tk = new StringTokenizer(sDisabledHttpMethods,",");
+			   			while(tk.hasMoreTokens())
+			   			{
+			   				String sMethodName = tk.nextToken().trim().toUpperCase();
+			   				if(sMethodName.length()>0)
+			   				{
+			   					listDisabledHttpMethods.add(sMethodName);
+			   				}	
+			   			}
+		   			}
+		   			mapApiDisabledHttpMethods.put(sKey, listDisabledHttpMethods);
+	   			}
+	   			
+	   			boolean isDisabledAll = mapApiDisabledHttpMethods.containsKey("TRUE") || mapApiDisabledHttpMethods.containsKey("ALL");
+	   			if(!isDisabledAll)
 	   			{
 		        	String sMappedURL = mapConfig.get(_RESTAPI_MAPPED_URL);
 		        	if(sMappedURL!=null)
@@ -467,339 +491,350 @@ public class CRUDService extends HttpServlet {
 		
 		if(mapCrudConfig!=null)
 		{			
-			if("true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_SERVE_STATICWEB)))
-			{
-				if(RestApiUtil.serveStaticWeb(req, res))
-					return;
-			}
+			String sMethod = req.getMethod().toUpperCase();
 			
-			ICRUDServicePlugin plugin = null;
-				//
-			try {
+			List<String> listDisabledMethods = mapApiDisabledHttpMethods.get("crud."+sCrudKey);
+			
+			boolean isDisabled = listDisabledMethods.contains(sMethod);
+			if(isDisabled)
+			{
+				httpReq.setHttp_status(HttpServletResponse.SC_NOT_FOUND);
+			}
+			else
+			{
+				if("true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_SERVE_STATICWEB)))
+				{
+					if(RestApiUtil.serveStaticWeb(req, res))
+						return;
+				}
+				
+				ICRUDServicePlugin plugin = null;
+					//
 				try {
-					plugin = getPlugin(mapCrudConfig);
-					//
-					crudReq = new CRUDServiceReq(req, mapCrudConfig);
-					crudReq.setCrudKey(sCrudKey);
-					crudReq.addUrlPathParam(mapPathParams);
-					crudReq.setDebug(isDebug);
-					
-					sReqUniqueID = RESTApiUtil.getReqUniqueId(crudReq);
-					crudReq.setReqUniqueID(sReqUniqueID);
-			    	
-			    	if(logger.isLoggable(Level.FINE))
-			    	{
-			    	  	sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+".start - "+req.getMethod()+" "+sbUrl.toString();
-			    	    logger.log(Level.FINE, sDebugAccessLog);
-			    		sDebugAccessLog = null;
-			    	}
-			    	
-					
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  echo.attrs:"+crudReq.getEchoJsonAttrs());
-					}
-					
-					String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
-					if(sIdFieldName==null || sIdFieldName.trim().length()==0)
-						sIdFieldName = "id";
-		
-					if(!isFilterById)
-					{
-						//for MappedUrl
-						isFilterById = mapPathParams.get(sIdFieldName)!=null;
-					}
-					
-					if(isFilterById)
-					{
+					try {
+						plugin = getPlugin(mapCrudConfig);
+						//
+						crudReq = new CRUDServiceReq(req, mapCrudConfig);
+						crudReq.setCrudKey(sCrudKey);
+						crudReq.addUrlPathParam(mapPathParams);
+						crudReq.setDebug(isDebug);
 						
-						if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
-								|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
-								|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
+						sReqUniqueID = RESTApiUtil.getReqUniqueId(crudReq);
+						crudReq.setReqUniqueID(sReqUniqueID);
+				    	
+				    	if(logger.isLoggable(Level.FINE))
+				    	{
+				    	  	sDebugAccessLog = "[DEBUG] rid:"+sReqUniqueID+" client:"+req.getRemoteAddr()+".start - "+req.getMethod()+" "+sbUrl.toString();
+				    	    logger.log(Level.FINE, sDebugAccessLog);
+				    		sDebugAccessLog = null;
+				    	}
+				    	
+						
+						if(isDebug)
 						{
-							String sIdValue = mapPathParams.get(sIdFieldName);
-							
-							if(sIdValue==null && sPaths.length==2)
-							{
-								sIdValue = sPaths[sPaths.length-1];
-							}
-							
-							if(sIdValue!=null)
-							{
-								if(crudReq.isIdFieldNumericOnly())
-								{
-									if(!pattNumberic.matcher(sIdValue).matches())
-									{
-										crudReq.setSkipJsonCrudDbProcess(true);
-										httpReq = getNotFoundResp(crudReq, httpReq);
-									}
-								}
-								crudReq.addCrudFilter(sIdFieldName, sIdValue);
-							}
-							else
-							{
-								isFilterById = false;
-							}
+							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  echo.attrs:"+crudReq.getEchoJsonAttrs());
 						}
-					}
-					//
-					
-					long lStart 	= System.currentTimeMillis();
-					long lElapsed 	= 0;
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.start");
-					}
-					crudReq = preProcess(plugin, crudReq);
-					lElapsed= System.currentTimeMillis()-lStart;
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.end- "+lElapsed+"ms");
-					}
-					
-					HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
-					
-					if(proxyHttpReq!=null)
-					{
-						httpReq = proxyHttpReq;
-					}
-					else
-					{
-						if(!crudReq.isSkipJsonCrudDbProcess() && proxyHttpReq==null)
+						
+						String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
+						if(sIdFieldName==null || sIdFieldName.trim().length()==0)
+							sIdFieldName = "id";
+			
+						if(!isFilterById)
 						{
-							if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
+							//for MappedUrl
+							isFilterById = mapPathParams.get(sIdFieldName)!=null;
+						}
+						
+						if(isFilterById)
+						{
+							
+							if(GET.equalsIgnoreCase(crudReq.getHttpMethod()) 
+									|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
+									|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 							{
-								lGzipThresholdBytes = (long) JsonCrudRestUtil.getCrudConfigNumbericVal(sCrudKey, _RESTAPI_GZIP_THRESHOLD, -1);
+								String sIdValue = mapPathParams.get(sIdFieldName);
 								
-								if(isFilterById)
+								if(sIdValue==null && sPaths.length==2)
 								{
-									jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
+									sIdValue = sPaths[sPaths.length-1];
+								}
+								
+								if(sIdValue!=null)
+								{
+									if(crudReq.isIdFieldNumericOnly())
+									{
+										if(!pattNumberic.matcher(sIdValue).matches())
+										{
+											crudReq.setSkipJsonCrudDbProcess(true);
+											httpReq = getNotFoundResp(crudReq, httpReq);
+										}
+									}
+									crudReq.addCrudFilter(sIdFieldName, sIdValue);
 								}
 								else
 								{
-									long lfetchSize = crudReq.getPaginationFetchSize();
-									
-									if(lfetchSize==0 && crudReq.getFetchLimit()>0)
-									{
-										lfetchSize = crudReq.getFetchLimit();
-									}
-			
-									jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
-											crudReq.getCrudFilters(), 
-											crudReq.getPaginationStartFrom(),
-											lfetchSize, 
-											crudReq.getCrudSorting(),
-											crudReq.getCrudReturns(),
-											crudReq.isReturnsExclude()
-											);
-									
-								}
-								
-								if(jsonResult!=null)
-								{
-									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-								}
-								
-							}
-							else if(POST.equalsIgnoreCase(crudReq.getHttpMethod()))
-							{
-								jsonResult = JsonCrudRestUtil.create(sCrudKey, crudReq.getInputContentData());
-								
-								if(jsonResult!=null)
-								{
-									httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+									isFilterById = false;
 								}
 							}
-							else if(PUT.equalsIgnoreCase(crudReq.getHttpMethod()))
-							{
-								if(isFilterById)
-								{
-									JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
-									JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
-									
-									if(jsonArrResult!=null)
-									{
-										httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-										
-										if(jsonArrResult.length()==1)
-										{
-											jsonResult = jsonArrResult.getJSONObject(0);
-										}
-										else
-										{
-											jsonResult = toPaginationResult(jsonArrResult);
-										}
-									}
-								}
-							}
-							else if(DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
-							{
-								JSONArray jsonArrResult = null;
-								if(isFilterById)
-								{
-									jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, crudReq.getCrudFilters());
-									if(jsonArrResult!=null)
-									{
-										httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
-										
-										if(jsonArrResult.length()==1)
-										{
-											jsonResult = jsonArrResult.getJSONObject(0);
-										}
-										else
-										{
-											jsonResult = toPaginationResult(jsonArrResult);
-										}
-									}
-								}
-							}
+						}
+						//
+						
+						long lStart 	= System.currentTimeMillis();
+						long lElapsed 	= 0;
+						if(isDebug)
+						{
+							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.start");
+						}
+						crudReq = preProcess(plugin, crudReq);
+						lElapsed= System.currentTimeMillis()-lStart;
+						if(isDebug)
+						{
+							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.end- "+lElapsed+"ms");
 						}
 						
-						if(jsonResult!=null)
-						{
-							boolean isResultOnly = "true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_RESULT_ONLY));
-							if(isResultOnly)
-							{
-								JSONArray jArrResult = JsonCrudRestUtil.getListResult(jsonResult);
-								if(jArrResult!=null)
-								{
-									httpReq.setContent_data(jArrResult.toString());
-								}
-							}
-							
-							if(httpReq.getContent_data()==null)
-								httpReq.setContent_data(jsonResult.toString());
-						}
+						HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
 						
-						if(isFilterById && httpReq.getContent_data()==null)
+						if(proxyHttpReq!=null)
 						{
-							//valid request id but not found
-							httpReq = getNotFoundResp(crudReq, httpReq);
-						}
-						
-						if(httpReq.getHttp_status() == HttpServletResponse.SC_OK 
-								&& (httpReq.getContent_type()==null || httpReq.getContent_type().trim().length()==0))
-						{
-							httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
-						}
-					}
-					///////////////////////////
-					
-					lStart = System.currentTimeMillis();
-					
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.start");
-					}
-					httpReq = postProcess(plugin, crudReq, httpReq);
-					lElapsed= System.currentTimeMillis()-lStart;
-					if(isDebug)
-					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
-					}
-					
-				}
-				catch (JsonCrudException e) 
-				{
-					JsonCrudExceptionList errList = new JsonCrudExceptionList();
-					errList.addException(e);
-					throw errList;
-				}
-			}
-			catch (JsonCrudExceptionList eList) 
-			{
-				//unhandled error
-				JsonCrudExceptionList handledErrList = new JsonCrudExceptionList();
-				
-				long lStart = System.currentTimeMillis();
-				if(isDebug)
-				{
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.start - totalException:"+eList.getAllExceptions().size());
-				}
-				for(JsonCrudException e : eList.getAllExceptions())
-				{
-					try {
-						httpReq = handleException(plugin, crudReq, httpReq, e);
-					} catch (JsonCrudException e1) {
-						handledErrList.addException(e1);
-					}
-				}
-				if(isDebug)
-				{
-					long lPluginElapse= System.currentTimeMillis()-lStart;
-					logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lPluginElapse+"ms");
-				}
-				
-				
-				//Accumulate
-				for(JsonCrudException e : handledErrList.getAllExceptions())
-				{
-					JSONObject jsonEx = new JSONObject();
-					jsonEx.put(e.getErrorCode(), e.getErrorMsg());
-					jArrErrors.put(jsonEx);
-				}
-
-			}
-			
-			boolean isBinary = httpReq.isBytesContent();
-			
-			if(!isBinary)
-			{
-				String sContentData = httpReq.getContent_data();
-				if(sContentData==null)
-					sContentData = "";
-				
-				boolean isError = (jArrErrors.length()>0) || (sContentData.indexOf("\"errors\":")>-1);
-				
-				if(isError)
-				{
-					sContentData = httpReq.getContent_data();
-					if(sContentData==null || sContentData.trim().length()==0)
-						sContentData = "{}";
-					
-					jsonResult = new JSONObject(sContentData);
-					
-					if(jsonResult.has("errors"))
-					{
-						if(jsonResult.get("errors") instanceof JSONArray)
-						{
-							JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
-							for(int i=0; i<jArrErrsFromPlugin.length(); i++)
-							{
-								jArrErrors.put(jArrErrsFromPlugin.getJSONObject(i));
-							}
-						}
-					}
-					
-					if(jArrErrors.length()>0)
-					{
-						jsonResult.put("errors", jArrErrors);
-						httpReq.setContent_type(TYPE_APP_JSON);
-						httpReq.setContent_data(jsonResult.toString());
-						httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
-					}
-				}
-				
-				//Kepo method, in case lulu forgot to set content type
-				String sContentType = httpReq.getContent_type();
-				if("".equalsIgnoreCase(sContentType))
-				{
-					if(sContentData!=null && sContentData.length()>0)
-					{
-						sContentData = sContentData.trim();
-						if(sContentData.startsWith("{") && sContentData.endsWith("}"))
-						{
-							httpReq.setContent_type(TYPE_APP_JSON);
+							httpReq = proxyHttpReq;
 						}
 						else
 						{
-							httpReq.setContent_type(default_content_type);
+							if(!crudReq.isSkipJsonCrudDbProcess() && proxyHttpReq==null)
+							{
+								if(GET.equalsIgnoreCase(crudReq.getHttpMethod()))
+								{
+									lGzipThresholdBytes = (long) JsonCrudRestUtil.getCrudConfigNumbericVal(sCrudKey, _RESTAPI_GZIP_THRESHOLD, -1);
+									
+									if(isFilterById)
+									{
+										jsonResult = JsonCrudRestUtil.retrieveFirst(sCrudKey, crudReq.getCrudFilters());
+									}
+									else
+									{
+										long lfetchSize = crudReq.getPaginationFetchSize();
+										
+										if(lfetchSize==0 && crudReq.getFetchLimit()>0)
+										{
+											lfetchSize = crudReq.getFetchLimit();
+										}
+				
+										jsonResult = JsonCrudRestUtil.retrieveList(sCrudKey, 
+												crudReq.getCrudFilters(), 
+												crudReq.getPaginationStartFrom(),
+												lfetchSize, 
+												crudReq.getCrudSorting(),
+												crudReq.getCrudReturns(),
+												crudReq.isReturnsExclude()
+												);
+										
+									}
+									
+									if(jsonResult!=null)
+									{
+										httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+									}
+									
+								}
+								else if(POST.equalsIgnoreCase(crudReq.getHttpMethod()))
+								{
+									jsonResult = JsonCrudRestUtil.create(sCrudKey, crudReq.getInputContentData());
+									
+									if(jsonResult!=null)
+									{
+										httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+									}
+								}
+								else if(PUT.equalsIgnoreCase(crudReq.getHttpMethod()))
+								{
+									if(isFilterById)
+									{
+										JSONObject jsonUpdateData = new JSONObject(crudReq.getInputContentData());
+										JSONArray jsonArrResult = JsonCrudRestUtil.update(sCrudKey, jsonUpdateData, crudReq.getCrudFilters());
+										
+										if(jsonArrResult!=null)
+										{
+											httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+											
+											if(jsonArrResult.length()==1)
+											{
+												jsonResult = jsonArrResult.getJSONObject(0);
+											}
+											else
+											{
+												jsonResult = toPaginationResult(jsonArrResult);
+											}
+										}
+									}
+								}
+								else if(DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
+								{
+									JSONArray jsonArrResult = null;
+									if(isFilterById)
+									{
+										jsonArrResult = JsonCrudRestUtil.delete(sCrudKey, crudReq.getCrudFilters());
+										if(jsonArrResult!=null)
+										{
+											httpReq.setHttp_status(HttpServletResponse.SC_OK); //200
+											
+											if(jsonArrResult.length()==1)
+											{
+												jsonResult = jsonArrResult.getJSONObject(0);
+											}
+											else
+											{
+												jsonResult = toPaginationResult(jsonArrResult);
+											}
+										}
+									}
+								}
+							}
+							
+							if(jsonResult!=null)
+							{
+								boolean isResultOnly = "true".equalsIgnoreCase(mapCrudConfig.get(_RESTAPI_RESULT_ONLY));
+								if(isResultOnly)
+								{
+									JSONArray jArrResult = JsonCrudRestUtil.getListResult(jsonResult);
+									if(jArrResult!=null)
+									{
+										httpReq.setContent_data(jArrResult.toString());
+									}
+								}
+								
+								if(httpReq.getContent_data()==null)
+									httpReq.setContent_data(jsonResult.toString());
+							}
+							
+							if(isFilterById && httpReq.getContent_data()==null)
+							{
+								//valid request id but not found
+								httpReq = getNotFoundResp(crudReq, httpReq);
+							}
+							
+							if(httpReq.getHttp_status() == HttpServletResponse.SC_OK 
+									&& (httpReq.getContent_type()==null || httpReq.getContent_type().trim().length()==0))
+							{
+								httpReq.setContent_type(TYPE_APP_JSON); //200 = ;
+							}
 						}
+						///////////////////////////
+						
+						lStart = System.currentTimeMillis();
+						
+						if(isDebug)
+						{
+							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.start");
+						}
+						httpReq = postProcess(plugin, crudReq, httpReq);
+						lElapsed= System.currentTimeMillis()-lStart;
+						if(isDebug)
+						{
+							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
+						}
+						
+					}
+					catch (JsonCrudException e) 
+					{
+						JsonCrudExceptionList errList = new JsonCrudExceptionList();
+						errList.addException(e);
+						throw errList;
 					}
 				}
-				//
+				catch (JsonCrudExceptionList eList) 
+				{
+					//unhandled error
+					JsonCrudExceptionList handledErrList = new JsonCrudExceptionList();
+					
+					long lStart = System.currentTimeMillis();
+					if(isDebug)
+					{
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.start - totalException:"+eList.getAllExceptions().size());
+					}
+					for(JsonCrudException e : eList.getAllExceptions())
+					{
+						try {
+							httpReq = handleException(plugin, crudReq, httpReq, e);
+						} catch (JsonCrudException e1) {
+							handledErrList.addException(e1);
+						}
+					}
+					if(isDebug)
+					{
+						long lPluginElapse= System.currentTimeMillis()-lStart;
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lPluginElapse+"ms");
+					}
+					
+					
+					//Accumulate
+					for(JsonCrudException e : handledErrList.getAllExceptions())
+					{
+						JSONObject jsonEx = new JSONObject();
+						jsonEx.put(e.getErrorCode(), e.getErrorMsg());
+						jArrErrors.put(jsonEx);
+					}
+	
+				}
+				
+				boolean isBinary = httpReq.isBytesContent();
+				
+				if(!isBinary)
+				{
+					String sContentData = httpReq.getContent_data();
+					if(sContentData==null)
+						sContentData = "";
+					
+					boolean isError = (jArrErrors.length()>0) || (sContentData.indexOf("\"errors\":")>-1);
+					
+					if(isError)
+					{
+						sContentData = httpReq.getContent_data();
+						if(sContentData==null || sContentData.trim().length()==0)
+							sContentData = "{}";
+						
+						jsonResult = new JSONObject(sContentData);
+						
+						if(jsonResult.has("errors"))
+						{
+							if(jsonResult.get("errors") instanceof JSONArray)
+							{
+								JSONArray jArrErrsFromPlugin = jsonResult.getJSONArray("errors");
+								for(int i=0; i<jArrErrsFromPlugin.length(); i++)
+								{
+									jArrErrors.put(jArrErrsFromPlugin.getJSONObject(i));
+								}
+							}
+						}
+						
+						if(jArrErrors.length()>0)
+						{
+							jsonResult.put("errors", jArrErrors);
+							httpReq.setContent_type(TYPE_APP_JSON);
+							httpReq.setContent_data(jsonResult.toString());
+							httpReq.setHttp_status(HttpServletResponse.SC_BAD_REQUEST);
+						}
+					}
+					
+					//Kepo method, in case lulu forgot to set content type
+					String sContentType = httpReq.getContent_type();
+					if("".equalsIgnoreCase(sContentType))
+					{
+						if(sContentData!=null && sContentData.length()>0)
+						{
+							sContentData = sContentData.trim();
+							if(sContentData.startsWith("{") && sContentData.endsWith("}"))
+							{
+								httpReq.setContent_type(TYPE_APP_JSON);
+							}
+							else
+							{
+								httpReq.setContent_type(default_content_type);
+							}
+						}
+					}
+					//
+				}
 			}
-			
 		}
 		
 		try {
