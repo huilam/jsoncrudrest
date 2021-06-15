@@ -509,10 +509,15 @@ public class CRUDService extends HttpServlet {
 				}
 				
 				ICRUDServicePlugin plugin = null;
+				String sPluginClassName = null;
 					//
 				try {
 					try {
 						plugin = getPlugin(mapCrudConfig);
+						if(plugin!=null)
+						{
+							sPluginClassName = plugin.getClass().getSimpleName();
+						}
 						//
 						crudReq = new CRUDServiceReq(req, mapCrudConfig);
 						crudReq.setCrudKey(sCrudKey);
@@ -579,17 +584,20 @@ public class CRUDService extends HttpServlet {
 						}
 						//
 						
-						long lStart 	= System.currentTimeMillis();
-						long lElapsed 	= 0;
-						if(isDebug)
+						if(plugin!=null)
 						{
-							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.start");
-						}
-						crudReq = preProcess(plugin, crudReq);
-						lElapsed= System.currentTimeMillis()-lStart;
-						if(isDebug)
-						{
-							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".preProcess.end- "+lElapsed+"ms");
+							long lStart 	= System.currentTimeMillis();
+							long lElapsed 	= 0;
+							if(isDebug)
+							{
+								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".preProcess.start");
+							}
+							crudReq = preProcess(plugin, crudReq);
+							lElapsed= System.currentTimeMillis()-lStart;
+							if(isDebug)
+							{
+								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".preProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
+							}
 						}
 						
 						HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
@@ -719,18 +727,20 @@ public class CRUDService extends HttpServlet {
 							}
 						}
 						///////////////////////////
-						
-						lStart = System.currentTimeMillis();
-						
-						if(isDebug)
+						if(plugin!=null)
 						{
-							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.start");
-						}
-						httpReq = postProcess(plugin, crudReq, httpReq);
-						lElapsed= System.currentTimeMillis()-lStart;
-						if(isDebug)
-						{
-							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".postProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
+							long lStart = System.currentTimeMillis();
+							
+							if(isDebug)
+							{
+								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".postProcess.start");
+							}
+							httpReq = postProcess(plugin, crudReq, httpReq);
+							long lElapsed= System.currentTimeMillis()-lStart;
+							if(isDebug)
+							{
+								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".postProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
+							}
 						}
 						
 					}
