@@ -759,7 +759,7 @@ public class CRUDService extends HttpServlet {
 					long lStart = System.currentTimeMillis();
 					if(isDebug)
 					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.start - totalException:"+eList.getAllExceptions().size());
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".handleException.start - totalException:"+eList.getAllExceptions().size());
 					}
 					for(JsonCrudException e : eList.getAllExceptions())
 					{
@@ -772,7 +772,7 @@ public class CRUDService extends HttpServlet {
 					if(isDebug)
 					{
 						long lPluginElapse= System.currentTimeMillis()-lStart;
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+plugin.getClass().getSimpleName()+".handleException.end - "+lPluginElapse+"ms");
+						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+sPluginClassName+".handleException.end - "+lPluginElapse+"ms");
 					}
 					
 					
