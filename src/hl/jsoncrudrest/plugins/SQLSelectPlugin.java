@@ -19,7 +19,7 @@ import hl.jsoncrudrest.restapi.ICRUDServicePlugin;
 
 public class SQLSelectPlugin implements ICRUDServicePlugin {
 
-	private static Pattern pattSQLParam = Pattern.compile("[\\s\\(\\)](\\?\\w+?)[\\s\\(\\)]");
+	private static Pattern pattSQLParam = Pattern.compile("\\$\\{(.+?)\\}");
 	
 	public CRUDServiceReq preProcess(CRUDServiceReq aCrudReq) throws JsonCrudException {
 		//
@@ -40,7 +40,7 @@ public class SQLSelectPlugin implements ICRUDServicePlugin {
 		{
 			
 			List<Object> listParamObjs = new ArrayList<Object>();
-			if(sConfigSQL.indexOf("?")>-1)
+			if(sConfigSQL.indexOf("$")>-1)
 			{
 				Matcher m = pattSQLParam.matcher(sConfigSQL);
 				String sTempSQL = sConfigSQL;
@@ -48,8 +48,8 @@ public class SQLSelectPlugin implements ICRUDServicePlugin {
 				while(m.find())
 				{
 					String sParamName = m.group(1);
-					listParams.add(sParamName.substring(1));
-					sTempSQL = sTempSQL.replace(sParamName, "?");
+					listParams.add(sParamName);
+					sTempSQL = sTempSQL.replaceAll("\\$\\{"+sParamName+"\\}", "?");
 				}
 				for(String sSQLParamName : listParams)
 				{
@@ -67,7 +67,17 @@ public class SQLSelectPlugin implements ICRUDServicePlugin {
 			
 			if(sConfigSQL!=null && sConfigSQL.trim().length()>0)
 			{
-				int iParamFillCount = (sConfigSQL.split("\\?").length)-1;
+				int iParamFillCount = 0;
+				if(sConfigSQL.indexOf("?")>-1)
+				{
+					iParamFillCount = (sConfigSQL.split("\\?").length)-1;
+					
+					if(sConfigSQL.trim().endsWith("?"))
+					{
+						iParamFillCount++;
+					}
+				}
+				
 				if(iParamFillCount != listParamObjs.size())
 				{
 					throw new JsonCrudException("SQLERR","Insufficient/Invalid Parameters ! " + iParamFillCount+"/"+listParamObjs.size());
