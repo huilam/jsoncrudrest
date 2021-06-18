@@ -756,25 +756,27 @@ public class CRUDService extends HttpServlet {
 					//unhandled error
 					JsonCrudExceptionList handledErrList = new JsonCrudExceptionList();
 					
-					long lStart = System.currentTimeMillis();
-					if(isDebug)
+					if(crudReq!=null) 
 					{
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".handleException.start - totalException:"+eList.getAllExceptions().size());
-					}
-					for(JsonCrudException e : eList.getAllExceptions())
-					{
-						try {
-							httpReq = handleException(plugin, crudReq, httpReq, e);
-						} catch (JsonCrudException e1) {
-							handledErrList.addException(e1);
+						long lStart = System.currentTimeMillis();
+						if(isDebug)
+						{
+							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".handleException.start - totalException:"+eList.getAllExceptions().size());
+						}
+						for(JsonCrudException e : eList.getAllExceptions())
+						{
+							try {
+								httpReq = handleException(plugin, crudReq, httpReq, e);
+							} catch (JsonCrudException e1) {
+								handledErrList.addException(e1);
+							}
+						}
+						if(isDebug)
+						{
+							long lPluginElapse= System.currentTimeMillis()-lStart;
+							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+sPluginClassName+".handleException.end - "+lPluginElapse+"ms");
 						}
 					}
-					if(isDebug)
-					{
-						long lPluginElapse= System.currentTimeMillis()-lStart;
-						logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  "+sCrudKey+".plugin:"+sPluginClassName+".handleException.end - "+lPluginElapse+"ms");
-					}
-					
 					
 					//Accumulate
 					for(JsonCrudException e : handledErrList.getAllExceptions())
