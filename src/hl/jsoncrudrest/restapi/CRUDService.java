@@ -539,6 +539,22 @@ public class CRUDService extends HttpServlet {
 						{
 							logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+"  echo.attrs:"+crudReq.getEchoJsonAttrs());
 						}
+
+						if(plugin!=null)
+						{
+							long lStart 	= System.currentTimeMillis();
+							long lElapsed 	= 0;
+							if(isDebug)
+							{
+								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".preProcess.start");
+							}
+							crudReq = preProcess(plugin, crudReq);
+							lElapsed= System.currentTimeMillis()-lStart;
+							if(isDebug)
+							{
+								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".preProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
+							}
+						}
 						
 						String sIdFieldName = mapCrudConfig.get(_RESTAPI_ID_ATTRNAME);
 						if(sIdFieldName==null || sIdFieldName.trim().length()==0)
@@ -583,22 +599,6 @@ public class CRUDService extends HttpServlet {
 							}
 						}
 						//
-						
-						if(plugin!=null)
-						{
-							long lStart 	= System.currentTimeMillis();
-							long lElapsed 	= 0;
-							if(isDebug)
-							{
-								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".preProcess.start");
-							}
-							crudReq = preProcess(plugin, crudReq);
-							lElapsed= System.currentTimeMillis()-lStart;
-							if(isDebug)
-							{
-								logger.info("[DEBUG] rid:"+crudReq.getReqUniqueID()+" "+sCrudKey+".plugin:"+sPluginClassName+".preProcess.end - status:"+httpReq.getHttp_status()+" "+lElapsed+"ms");
-							}
-						}
 						
 						HttpResp proxyHttpReq = forwardToProxy(crudReq, httpReq);
 						
