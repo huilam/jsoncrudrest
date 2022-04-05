@@ -563,7 +563,7 @@ public class CRUDService extends HttpServlet {
 						if(!isFilterById)
 						{
 							//for MappedUrl
-							isFilterById = mapPathParams.get(sIdFieldName)!=null;
+							isFilterById = crudReq.getUrlPathParam(sIdFieldName)!=null;
 						}
 						
 						if(isFilterById)
@@ -573,7 +573,7 @@ public class CRUDService extends HttpServlet {
 									|| PUT.equalsIgnoreCase(crudReq.getHttpMethod()) 
 									|| DELETE.equalsIgnoreCase(crudReq.getHttpMethod()))
 							{
-								String sIdValue = mapPathParams.get(sIdFieldName);
+								String sIdValue = crudReq.getUrlPathParam(sIdFieldName);
 								
 								if(sIdValue==null && sPaths.length==2)
 								{
