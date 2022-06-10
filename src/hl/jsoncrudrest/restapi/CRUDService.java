@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -347,6 +350,16 @@ public class CRUDService extends HttpServlet {
     	json.put("jsoncrud.restapi.version", _VERSION);
     	json.put("jsoncrud.restapi.loglevel", sLoggerLevel);
     	json.put("jsoncrud.framework",JsonCrudRestUtil.getJsonCrudVersion());
+    	
+    	SimpleDateFormat df = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss.SSS");
+    	long lCurTimestamp = System.currentTimeMillis();
+    	json.put("current.epoch.timestamp", lCurTimestamp);
+    	json.put("current.formatted.datetime", df.format(new Date(lCurTimestamp)));
+    	TimeZone tz = TimeZone.getDefault();
+    	if(tz!=null)
+    	{
+    		json.put("current.timezone", tz.getDisplayName());
+    	}
     	return json;
     }
     
