@@ -500,7 +500,8 @@ public class CRUDService extends HttpServlet {
 			}
 		}
 		
-		isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey) || logger.isLoggable(Level.FINE);
+		isDebug = JsonCrudRestUtil.isDebugEnabled(sCrudKey);
+		// || logger.isLoggable(Level.FINEST); //Ignore logger level
 		
 		if(mapCrudConfig!=null)
 		{			
