@@ -26,7 +26,7 @@
 			<include name="${ant.project.name}_*.jar"/>
 		</copydir>
 		<copydir src="${test}" dest="${releases}/war/WEB-INF/classes">
-			<include name="jsoncrud.properties"/>
+			<include name="jsoncrud*.properties"/>
 			<include name="*.sql"/>
 		</copydir>		
 		<jar jarfile="${releases}/${ant.project.name}.war" basedir="${releases}/war">
