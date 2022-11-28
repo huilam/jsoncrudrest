@@ -988,12 +988,9 @@ public class CRUDService extends HttpServlet {
 
 				String sProxyQuery = sProxyUrl.substring(iPos+1);
 				
-				System.out.println("[proxy] url.getQuery()="+sProxyQuery);
-				
 				if(sProxyQuery!=null && sProxyQuery.length()>0)
 				{
 					sProxyUrl = sProxyUrl.substring(0, iPos);
-					System.out.println("[proxy] sProxyUrl="+sProxyUrl);
 					
 					Map<String, Map<String,String>> mapParams = CRUDServiceUtil.getQueryParamsMap(sProxyQuery);
 					if(mapParams==null)
@@ -1102,6 +1099,9 @@ public class CRUDService extends HttpServlet {
     			
     			sbApiUrl.append(sProtocol);
     			sbApiUrl.append("://").append(sApiServer);
+    			
+    		
+    			
     			sbApiUrl.append(":").append(req.getServerPort()).append(sContextRoot);
     			sbApiUrl.append(sProxyUrl);
     		}
@@ -1164,6 +1164,10 @@ public class CRUDService extends HttpServlet {
     		//debug
 			if(isDebug || logger.isLoggable(Level.FINE))
 			{
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - RequestURL:"+req.getRequestURL().toString());
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - RequestURI:"+req.getRequestURI());
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - LocalName:LocalPort:"+req.getLocalName()+":"+req.getLocalPort());
+				//
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Config  - pathinfo:"+sOrgPathInfo+"  configkey:"+sProxyUrlKey);
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - method:"+sHttpMethod+"  url:"+sProxyApiUrl);
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - type:"+aCrudReq.getInputContentType()+"  type:"+aCrudReq.getInputContentType()+"  data:"+aCrudReq.getInputContentData());
