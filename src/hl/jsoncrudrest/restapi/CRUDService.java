@@ -1068,7 +1068,7 @@ public class CRUDService extends HttpServlet {
     		if(sProxyUrl.indexOf("://")==-1) //-- http://  https://   ws://   wss://
     		{
     			HttpServletRequest req 	= aCrudReq.getHttpServletReq();
-    			String sApiServer = req.getServerName();
+    			String sApiServer = "127.0.0.1"; //req.getServerName();
     			
     			if("true".equalsIgnoreCase(aCrudReq.getConfigMap().get(_RESTAPI_PROXY_HOSTNAME2IP)))
     			{
@@ -1099,10 +1099,7 @@ public class CRUDService extends HttpServlet {
     			
     			sbApiUrl.append(sProtocol);
     			sbApiUrl.append("://").append(sApiServer);
-    			
-    		
-    			
-    			sbApiUrl.append(":").append(req.getServerPort()).append(sContextRoot);
+    			sbApiUrl.append(":").append(req.getLocalPort()).append(sContextRoot);
     			sbApiUrl.append(sProxyUrl);
     		}
     		else
