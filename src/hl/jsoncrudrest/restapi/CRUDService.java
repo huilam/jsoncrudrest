@@ -1161,13 +1161,21 @@ public class CRUDService extends HttpServlet {
     		//debug
 			if(isDebug || logger.isLoggable(Level.FINE))
 			{
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" jsoncrud.isDebug:"+isDebug+", logger.Level:"+logger.getLevel());
+				//
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - RequestURL:"+req.getRequestURL().toString());
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - RequestURI:"+req.getRequestURI());
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - LocalName:LocalPort:"+req.getLocalName()+":"+req.getLocalPort());
 				//
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Config  - pathinfo:"+sOrgPathInfo+"  configkey:"+sProxyUrlKey);
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - method:"+sHttpMethod+"  url:"+sProxyApiUrl);
-				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - type:"+aCrudReq.getInputContentType()+"  type:"+aCrudReq.getInputContentType()+"  data:"+aCrudReq.getInputContentData());
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - type:"+aCrudReq.getInputContentType()+"  type:"+aCrudReq.getInputContentType()+"  data-length:"+aCrudReq.getInputContentData().length());
+				//
+				String sContentType = aCrudReq.getInputContentType().toLowerCase();
+				if(sContentType.contains("json") || sContentType.contains("text"))
+				{
+					logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - data:"+aCrudReq.getInputContentData());
+				}
 			}
     		
     		try {
