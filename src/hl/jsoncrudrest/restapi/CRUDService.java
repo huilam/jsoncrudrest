@@ -1169,12 +1169,26 @@ public class CRUDService extends HttpServlet {
 				//
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Config  - pathinfo:"+sOrgPathInfo+"  configkey:"+sProxyUrlKey);
 				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - method:"+sHttpMethod+"  url:"+sProxyApiUrl);
-				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - type:"+aCrudReq.getInputContentType()+"  type:"+aCrudReq.getInputContentType()+"  data-length:"+aCrudReq.getInputContentData().length());
+				
+				String sContentData = aCrudReq.getInputContentData();
+				long lContentSize = sContentData!=null?sContentData.length():-1;
+				String sContentType = aCrudReq.getInputContentType();				
+				if(sContentType!=null)
+					sContentType = sContentType.toLowerCase();
+				else
+					sContentType = "null";
+				
+				logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - type:"+sContentType+"  data-length:"+lContentSize);
 				//
-				String sContentType = aCrudReq.getInputContentType().toLowerCase();
-				if(sContentType.contains("json") || sContentType.contains("text"))
+				
+				if(lContentSize>-1 && (sContentType.contains("json") || sContentType.contains("text")))
 				{
-					logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - data:"+aCrudReq.getInputContentData());
+					if(lContentSize>1000)
+					{
+						sContentData = sContentData.substring(0, 1000) + " ...";
+					}
+					
+					logger.log(Level.INFO, "[DEBUG] rid:"+aCrudReq.getReqUniqueID()+" Proxy.Request - data:"+sContentData);
 				}
 			}
     		
