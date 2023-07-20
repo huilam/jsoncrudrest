@@ -3,6 +3,8 @@ package hl.jsoncrudrest.restapi;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -1344,12 +1346,21 @@ public class CRUDService extends HttpServlet {
     	{
     		JsonCrudException e = null;
 	    	try {
-				plugin = (ICRUDServicePlugin) Class.forName(sPluginClassName).newInstance();
+				Constructor constructor = Class.forName(sPluginClassName).getDeclaredConstructor();
+	    		plugin = (ICRUDServicePlugin) constructor.newInstance();
+	    	} catch (IllegalArgumentException ex) {
+				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
 			} catch (InstantiationException ex) {
 				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
 			} catch (IllegalAccessException ex) {
 				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
 			} catch (ClassNotFoundException ex) {
+				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
+			} catch (NoSuchMethodException ex) {
+				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
+			} catch (SecurityException ex) {
+				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
+			} catch (InvocationTargetException ex) {
 				e = new JsonCrudException(JsonCrudConfig.ERRCODE_PLUGINEXCEPTION, ex);
 			}
 	    	
