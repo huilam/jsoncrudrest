@@ -1,12 +1,20 @@
 # Getting Started
 ```
 1. Download and setup 
-   1.1 Apache tomcat application server from https://tomcat.apache.org/download-80.cgi
-   1.2 Postgres database server from https://www.postgresql.org/download/
-2. Download https://github.com/huilam/jsoncrudrest/blob/master/releases/jsoncrudrest.war and deploy to tomcat 
-3. Create sample application database schema by execute "test/01-create-schema.sql"
-4. Make sure "test/jsoncrud.properties" is in classpath
-5. Uses REST client such as PostMan or Web Browser to test the REST API
+   1.1 OpenJDK 11 : https://adoptium.net/temurin/releases/?version=11 
+   1.2 Apache Tomcat 9 : https://tomcat.apache.org/download-90.cgi
+   1.3 PostgreSQL (latest) : https://www.postgresql.org/download/
+2. Setup JSONCrudRest WebApp 
+   2.1 Download https://github.com/huilam/jsoncrudrest/blob/master/releases/jsoncrudrest.war 
+   2.2 Deploy to Tomcat's "/webapps" folder 
+3. Prepare Postges for Sample App
+   3.1 Download PgAdmin (PostgreSQL Admin tool UI) : https://www.pgadmin.org/download/
+   3.2 Connect PgAdmin to your PostgreSQL database server
+   3.3 Execute "test/01-create-schema.sql" to create Sample application database schema  
+4. Web Browser to test the REST API
+   4.1 Frameowkr About : http://127.0.0.1:8080/hl-jsoncrudrest/about/framework
+   4.2 Sample 'Echo' Endpoint : http://127.0.0.1:8080/hl-jsoncrudrest/echo/HELLO%20WORLD
+   4.3 Sample Database Endpoint : http://127.0.0.1:8080/hl-jsoncrudrest/jsoncrud_cfg
 ```
 
 # Sample Endpoints
