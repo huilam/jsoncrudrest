@@ -4,6 +4,7 @@
 	<property name="build" location="build"/>
 	<property name="releases" location="releases"/>
 	<property name="webcontent" location="WebContent"/>
+	<property name="jdk.ver" value="17"/>
 	
 	<tstamp>
 	    <format property="buildno" pattern="yyyyMMdd-HHmm-ss"/>
@@ -11,14 +12,13 @@
 	
 	<target name="compile" depends="clean">
 		<mkdir dir="${build}"/>
-		<javac srcdir="${src}" destdir="${build}" debug="true" source="11" target="11" includeantruntime="false">
+		<javac srcdir="${src}" destdir="${build}" debug="true" source="${jdk.ver}" target="${jdk.ver}" includeantruntime="false">
 			<classpath refid="compile.classpath"/>
 		</javac>
 	</target>
 	
 	<target name="war" depends="jar">
 		<mkdir dir="${releases}/war/WEB-INF/classes" />
-			
 		<copydir src="${webcontent}" dest="${releases}/war">
 			<exclude name="**/classes/**"/>
 		</copydir>
@@ -40,7 +40,7 @@
 		</delete>
 		<mkdir dir="${build}/version"/>
 		<touch file="${build}/version/${ant.project.name}_${buildno}"/>
-		<jar jarfile="${build}/${ant.project.name}_jdk11_${buildno}.jar" basedir="${build}">
+		<jar jarfile="${build}/${ant.project.name}_jdk${jdk.ver}_${buildno}.jar" basedir="${build}">
 			<include name="**/*.class"/>
 			<include name="version/${ant.project.name}_${buildno}"/>
 		</jar>
@@ -54,9 +54,7 @@
 	<path id="compile.classpath">
 		<fileset dir="${basedir}">
 		    <include name="WebContent/WEB-INF/lib/*.jar" />
-		</fileset>
-		<fileset dir="${releases}">
-			<include name="build-lib/*.jar" />
+			<include name="lib/*.jar" />
 		</fileset>
 	</path>
 </project>

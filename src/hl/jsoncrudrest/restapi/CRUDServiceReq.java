@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
 
 import hl.jsoncrud.CRUDMgr;
@@ -15,6 +14,7 @@ import hl.jsoncrud.JsonCrudExceptionList;
 import hl.jsoncrud.JsonCrudRestUtil;
 import hl.restapi.service.RESTApiUtil;
 import hl.restapi.service.RESTServiceReq;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class CRUDServiceReq extends RESTServiceReq {
 

@@ -7,8 +7,6 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -16,6 +14,7 @@ import hl.common.http.HttpResp;
 import hl.jsoncrud.JsonCrudException;
 import hl.jsoncrudrest.restapi.CRUDServiceReq;
 import hl.jsoncrudrest.restapi.ICRUDServicePlugin;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class SQLSelectPlugin implements ICRUDServicePlugin {
 
