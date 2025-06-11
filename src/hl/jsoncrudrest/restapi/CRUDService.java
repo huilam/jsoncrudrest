@@ -47,6 +47,8 @@ public class CRUDService extends HttpServlet {
 	
 	private static final String _ERROR_PROXY		= "PROXY_ERROR";
 	
+	protected static String _CRUD_TABLENAME			= "tablename";
+	
 	protected static String _RESTAPI_PROXY_URL			= "restapi.proxy.url";
 	protected static String _RESTAPI_PROXY_HOSTNAME2IP	= "restapi.proxy.hostname-to-ip";
 	
@@ -158,6 +160,12 @@ public class CRUDService extends HttpServlet {
 	   			boolean isDisabledAll = mapApiDisabledHttpMethods.containsKey("TRUE") || mapApiDisabledHttpMethods.containsKey("ALL");
 	   			if(!isDisabledAll)
 	   			{
+	   				String sId = mapConfig.get(_RESTAPI_ID_ATTRNAME);
+	   				String sDBTableName = mapConfig.get(_CRUD_TABLENAME);
+	   				
+	    			if(sId==null)
+	    				sId = "id";
+	    			
 		        	String sMappedURL = mapConfig.get(_RESTAPI_MAPPED_URL);
 		        	if(sMappedURL!=null)
 		        	{
@@ -171,15 +179,24 @@ public class CRUDService extends HttpServlet {
 		        			}
 		        			mapUrl.put(sMappedURL, sCrudKey);
 		        			mapMappedUrlCrudkey.put(sMappedURLs.length, mapUrl);
+		        			
+		        			if(sDBTableName!=null)
+		        			{
+			        			// +ID
+			        			sMappedURL += "/{"+sId+"}";
+			        			sMappedURLs = RESTApiUtil.getUrlSegments(sMappedURL);
+			        			mapUrl = mapMappedUrlCrudkey.get(sMappedURLs.length);
+			        			if(mapUrl==null)
+			        			{
+			        				mapUrl = new HashMap<String, String>();
+			        			}
+			        			mapUrl.put(sMappedURL, sCrudKey);
+			        			mapMappedUrlCrudkey.put(sMappedURLs.length, mapUrl);
+		        			}
 		        		}
 		        	}
-		        	else //if(sMappedURL==null)
+		        	else
 		        	{
-		
-		    			String sId = mapConfig.get(_RESTAPI_ID_ATTRNAME);
-		    			if(sId==null)
-		    				sId = "id";
-		    			
 		        		Map<String, String> mapOne = mapAutoUrlCrudkey.get(1);
 		        		if(mapOne==null)
 		        		{
