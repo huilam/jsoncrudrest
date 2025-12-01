@@ -6,7 +6,9 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -1291,7 +1293,15 @@ public class CRUDService extends HttpServlet {
 					sb.append(CRUDServiceUtil.QPARAM_MULTIKEY_SEPARATOR);
 				}
 				sb.append(sJsonKeys).append(CRUDServiceUtil.QPARAM_MULTIKEY_KEYVALUE_SEPARATOR);
-				sb.append(aJsonObject.get(sJsonKeys));
+				
+				String sVal = String.valueOf(aJsonObject.get(sJsonKeys));
+				
+				if(sVal!=null && sVal.length()>0)
+    			{
+    				sVal = sVal.replace(" ", "%20");
+    				sVal = URLEncoder.encode(sVal, StandardCharsets.UTF_8);
+    			}
+				sb.append(sVal);
     		}
 		}
 		
